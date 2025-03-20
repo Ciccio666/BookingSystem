@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface TimeSlot {
   time: string;
@@ -38,19 +39,24 @@ interface WeeklyScheduleProps {
   onSave: (schedule: DaySchedule[]) => void;
 }
 
-const DEFAULT_TIME_SLOTS = Array.from({ length: 24 }, (_, i) => {
-  const hour = i; 
-  const isPM = hour >= 12;
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  const ampm = isPM ? 'PM' : 'AM';
-  const time = `${displayHour}:00 ${ampm}`;
-  const halfHourTime = `${displayHour}:30 ${ampm}`;
+// Create a function to generate time slots for each hour only
+const generateHourlyTimeSlots = () => {
+  const slots: TimeSlot[] = [];
   
-  return [
-    { time, isAvailable: false },
-    { time: halfHourTime, isAvailable: false }
-  ];
-}).flat();
+  for (let hour = 0; hour < 24; hour++) {
+    // Format hours in 12-hour format with AM/PM
+    const isPM = hour >= 12;
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const ampm = isPM ? 'PM' : 'AM';
+    
+    slots.push({
+      time: `${displayHour}:00 ${ampm}`,
+      isAvailable: false
+    });
+  }
+  
+  return slots;
+};
 
 const WeeklySchedule = ({ initialSchedule, onSave }: WeeklyScheduleProps) => {
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
@@ -64,17 +70,40 @@ const WeeklySchedule = ({ initialSchedule, onSave }: WeeklyScheduleProps) => {
     } else {
       const days: DaySchedule[] = [];
       for (let i = 0; i < 7; i++) {
+        const daySlots = generateHourlyTimeSlots();
+        
+        // Set some default availability (9 AM to 9 PM) for weekdays
+        if (i > 0 && i < 6) { // Monday through Friday
+          daySlots.forEach((slot, index) => {
+            // Hours 9 through 21 (9AM to 9PM) are available by default
+            if (index >= 9 && index < 21) {
+              slot.isAvailable = true;
+            }
+          });
+        }
+        
         days.push({
           date: addDays(currentWeekStart, i),
           dayOfWeek: i,
-          slots: [...DEFAULT_TIME_SLOTS],
+          slots: daySlots,
           isRecurring: false,
-          isEnabled: true
+          isEnabled: i > 0 && i < 6 // Mon-Fri enabled by default
         });
       }
       setSchedule(days);
     }
-  }, [initialSchedule, currentWeekStart]);
+  }, [initialSchedule]);
+
+  // Update dates when week changes
+  useEffect(() => {
+    if (schedule.length) {
+      const updatedSchedule = schedule.map((day, index) => ({
+        ...day,
+        date: addDays(currentWeekStart, index)
+      }));
+      setSchedule(updatedSchedule);
+    }
+  }, [currentWeekStart]);
 
   const handlePreviousWeek = () => {
     setCurrentWeekStart(prev => addWeeks(prev, -1));
@@ -126,50 +155,49 @@ const WeeklySchedule = ({ initialSchedule, onSave }: WeeklyScheduleProps) => {
   };
 
   const formatWeekDisplay = () => {
-    const endOfWeek = addDays(currentWeekStart, 6);
     return `Week of ${format(currentWeekStart, 'MMM d, yyyy')}`;
   };
   
+  // Function to group time slots into AM and PM
+  const getAMSlots = (slots: TimeSlot[]) => slots.filter(slot => slot.time.includes('AM'));
+  const getPMSlots = (slots: TimeSlot[]) => slots.filter(slot => slot.time.includes('PM'));
+  
   return (
-    <Card className="w-full dark:bg-slate-900">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <Button variant="ghost" onClick={handlePreviousWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <CardTitle>{formatWeekDisplay()}</CardTitle>
-          <Button variant="ghost" onClick={handleNextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <CardDescription>Set your weekly availability</CardDescription>
-        
-        <div className="mt-4 flex items-center gap-4">
-          <Label htmlFor="maxDaysAhead">Maximum Days Ahead</Label>
-          <Input
-            id="maxDaysAhead"
-            type="number"
-            value={maxDaysAhead}
-            onChange={(e) => setMaxDaysAhead(parseInt(e.target.value))}
-            className="w-24"
-            min="1"
-          />
-          <span className="text-sm text-muted-foreground">
-            Determines how far in advance clients can book
-          </span>
-        </div>
-      </CardHeader>
+    <div className="bg-slate-900 text-white rounded-lg p-6 w-full">
+      <div className="flex justify-between items-center mb-6">
+        <Button
+          variant="outline"
+          onClick={handlePreviousWeek}
+          className="border-gray-700 bg-transparent hover:bg-gray-800 text-white"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-xl font-medium">{formatWeekDisplay()}</h2>
+        <Button
+          variant="outline"
+          onClick={handleNextWeek}
+          className="border-gray-700 bg-transparent hover:bg-gray-800 text-white"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
       
-      <CardContent className="space-y-6">
+      <div className="mb-6 flex items-center">
+        <div className="min-w-[170px]">Maximum Days Ahead</div>
+        <div className="bg-gray-800 px-3 py-2 rounded-md min-w-[70px] text-center">
+          {maxDaysAhead}
+        </div>
+        <p className="ml-4 text-sm text-gray-400">
+          Determines how far in advance clients can book
+        </p>
+      </div>
+      
+      <div className="space-y-8">
         {schedule.map((day, dayIndex) => (
-          <div key={dayIndex} className={`border rounded-lg p-4 ${!day.isEnabled ? 'opacity-60' : ''}`}>
+          <div key={dayIndex} className="border border-gray-700 rounded-lg p-4">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
-                <Switch 
-                  checked={day.isEnabled}
-                  onCheckedChange={() => handleToggleDayEnabled(dayIndex)}
-                />
-                <h3 className="text-lg font-medium">
+                <h3 className="font-medium text-lg">
                   {format(day.date, 'EEEE (MMM d)')}
                 </h3>
               </div>
@@ -178,62 +206,67 @@ const WeeklySchedule = ({ initialSchedule, onSave }: WeeklyScheduleProps) => {
                 <Switch 
                   checked={day.isRecurring}
                   onCheckedChange={() => handleToggleRecurring(dayIndex)}
-                  disabled={!day.isEnabled}
+                  className="data-[state=checked]:bg-teal-500"
                 />
               </div>
             </div>
             
-            {day.isEnabled && (
-              <>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">AM Hours</h4>
-                <div className="grid grid-cols-6 gap-2 mb-4">
-                  {day.slots
-                    .filter(slot => slot.time.includes('AM'))
-                    .map((slot, slotIndex) => {
-                      const actualIndex = day.slots.findIndex(s => s.time === slot.time);
-                      return (
-                        <Button
-                          key={`${dayIndex}-${slotIndex}-${slot.time}`}
-                          variant={slot.isAvailable ? "default" : "outline"}
-                          className={`text-xs h-10 ${slot.isAvailable ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-                          onClick={() => handleTimeSlotClick(dayIndex, actualIndex)}
-                        >
-                          {slot.time}
-                        </Button>
-                      );
-                    })}
-                </div>
-                
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">PM Hours</h4>
-                <div className="grid grid-cols-6 gap-2">
-                  {day.slots
-                    .filter(slot => slot.time.includes('PM'))
-                    .map((slot, slotIndex) => {
-                      const actualIndex = day.slots.findIndex(s => s.time === slot.time);
-                      return (
-                        <Button
-                          key={`${dayIndex}-${slotIndex}-${slot.time}`}
-                          variant={slot.isAvailable ? "default" : "outline"}
-                          className={`text-xs h-10 ${slot.isAvailable ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-                          onClick={() => handleTimeSlotClick(dayIndex, actualIndex)}
-                        >
-                          {slot.time}
-                        </Button>
-                      );
-                    })}
-                </div>
-              </>
-            )}
+            <div className="grid grid-cols-6 gap-2 mb-4">
+              {/* AM Hours */}
+              {getAMSlots(day.slots).map((slot, slotIndex) => {
+                const actualIndex = day.slots.findIndex(s => s.time === slot.time);
+                return (
+                  <Button
+                    key={`${dayIndex}-am-${slotIndex}`}
+                    variant={slot.isAvailable ? "default" : "outline"}
+                    className={cn(
+                      "text-sm rounded-md",
+                      slot.isAvailable 
+                        ? "bg-teal-500 hover:bg-teal-600 text-white"
+                        : "bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700"
+                    )}
+                    onClick={() => handleTimeSlotClick(dayIndex, actualIndex)}
+                  >
+                    {slot.time}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <div className="grid grid-cols-6 gap-2">
+              {/* PM Hours */}
+              {getPMSlots(day.slots).map((slot, slotIndex) => {
+                const actualIndex = day.slots.findIndex(s => s.time === slot.time);
+                return (
+                  <Button
+                    key={`${dayIndex}-pm-${slotIndex}`}
+                    variant={slot.isAvailable ? "default" : "outline"}
+                    className={cn(
+                      "text-sm rounded-md",
+                      slot.isAvailable 
+                        ? "bg-teal-500 hover:bg-teal-600 text-white"
+                        : "bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700"
+                    )}
+                    onClick={() => handleTimeSlotClick(dayIndex, actualIndex)}
+                  >
+                    {slot.time}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         ))}
-      </CardContent>
+      </div>
       
-      <CardFooter className="flex justify-end">
-        <Button onClick={handleSaveSchedule} className="bg-primary text-primary-foreground">
+      <div className="mt-6 flex justify-end">
+        <Button 
+          onClick={handleSaveSchedule} 
+          className="bg-teal-500 hover:bg-teal-600 text-white"
+        >
           Save Availability
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 

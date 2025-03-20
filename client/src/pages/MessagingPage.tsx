@@ -3,13 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConversationList from "@/components/messaging/ConversationList";
 import ChatWindow from "@/components/messaging/ChatWindow";
+import NewConversationModal from "@/components/messaging/NewConversationModal";
 import { Conversation, Message } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const MessagingPage = () => {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   const [currentUserId] = useState<number | undefined>(1); // In a real app, this would come from auth context
+  const [conversationsList, setConversationsList] = useState<Conversation[]>([]);
   const { toast } = useToast();
 
   // Mock conversations - in a real app, this would come from the API
@@ -61,6 +64,13 @@ const MessagingPage = () => {
       ] as Conversation[];
     },
   });
+
+  // Update local conversations list when API data changes
+  useEffect(() => {
+    if (conversations) {
+      setConversationsList(conversations);
+    }
+  }, [conversations]);
 
   // Get messages for active conversation
   const { data: messages, isLoading: messagesLoading } = useQuery({
@@ -136,10 +146,10 @@ const MessagingPage = () => {
 
   // Set initial active conversation
   useEffect(() => {
-    if (!activeConversationId && conversations && conversations.length > 0) {
-      setActiveConversationId(conversations[0].id);
+    if (!activeConversationId && conversationsList.length > 0) {
+      setActiveConversationId(conversationsList[0].id);
     }
-  }, [conversations, activeConversationId]);
+  }, [conversationsList, activeConversationId]);
 
   // Handle selecting a conversation
   const handleSelectConversation = (conversation: Conversation) => {
@@ -148,22 +158,83 @@ const MessagingPage = () => {
 
   // Handle new conversation
   const handleNewConversation = () => {
+    setIsNewConversationModalOpen(true);
+  };
+
+  // Handle creating a new conversation
+  const handleCreateConversation = (name: string, phone: string, message: string) => {
+    const newId = `new-${Date.now()}`;
+    
+    // Create new conversation
+    const newConversation: Conversation = {
+      id: newId,
+      contact: {
+        name: name,
+        phone: phone,
+        // Use a placeholder avatar or first letter of name
+        avatar: undefined,
+      },
+      lastMessage: {
+        content: message,
+        timestamp: new Date().toISOString(),
+        isRead: true,
+      },
+    };
+    
+    // Add to conversations list
+    const updatedConversations = [newConversation, ...conversationsList];
+    setConversationsList(updatedConversations);
+    
+    // Set as active conversation
+    setActiveConversationId(newId);
+    
+    // Show success message
     toast({
-      title: "Create new conversation",
-      description: "This feature is not yet implemented.",
+      title: "Conversation created",
+      description: `New conversation with ${name} started.`,
     });
   };
 
   // Handle sending a message
   const handleSendMessage = async (message: Message) => {
-    // In a real app, this would add the message to the messages array
-    // and also trigger a refetch of the conversation list to update the last message
+    // In a real app, this would make an API call to send the message
+    // For now, we'll manually update our state
+    
+    // Create a new message object
+    const newMessage = {
+      ...message,
+      id: Date.now(), // Use timestamp as a temporary ID
+      timestamp: new Date().toISOString(),
+      status: "sent",
+    };
+    
+    // Update the active conversation's last message
+    const updatedConversations = conversationsList.map(conversation => {
+      if (conversation.id === activeConversationId) {
+        return {
+          ...conversation,
+          lastMessage: {
+            content: message.content,
+            timestamp: new Date().toISOString(),
+            isRead: true,
+          },
+        };
+      }
+      return conversation;
+    });
+    
+    setConversationsList(updatedConversations);
+    
+    // In a real app, we would refetch the conversation data
     queryClient.invalidateQueries({ queryKey: ['/api/messages/conversation', activeConversationId] });
     queryClient.invalidateQueries({ queryKey: ['/api/conversations'] });
   };
 
   // Get the current active conversation
-  const activeConversation = conversations?.find(c => c.id === activeConversationId) || null;
+  const activeConversation = conversationsList.find(c => c.id === activeConversationId) || null;
+
+  // Create messagesList with both existing messages and any new ones
+  const messagesList = messages || [];
 
   return (
     <div>
@@ -171,7 +242,7 @@ const MessagingPage = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
         {/* Conversation List */}
-        {conversationsLoading ? (
+        {conversationsLoading && conversationsList.length === 0 ? (
           <div className="bg-white rounded-lg shadow overflow-hidden lg:col-span-1">
             <div className="border-b border-neutral-200 p-4">
               <Skeleton className="h-10 w-full" />
@@ -190,7 +261,7 @@ const MessagingPage = () => {
           </div>
         ) : (
           <ConversationList
-            conversations={conversations || []}
+            conversations={conversationsList}
             activeConversationId={activeConversationId}
             onSelectConversation={handleSelectConversation}
             onNewConversation={handleNewConversation}
@@ -201,16 +272,23 @@ const MessagingPage = () => {
         {activeConversation ? (
           <ChatWindow
             conversation={activeConversation}
-            messages={messages || []}
+            messages={messagesList}
             currentUserId={currentUserId}
             onMessageSend={handleSendMessage}
           />
         ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden lg:col-span-2 flex items-center justify-center">
-            <p className="text-neutral-500">Select a conversation to start messaging</p>
+            <p className="text-neutral-500">Select a conversation or start a new one</p>
           </div>
         )}
       </div>
+      
+      {/* New Conversation Modal */}
+      <NewConversationModal
+        isOpen={isNewConversationModalOpen}
+        onClose={() => setIsNewConversationModalOpen(false)}
+        onCreateConversation={handleCreateConversation}
+      />
     </div>
   );
 };
