@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Service, TimeSlot } from "@/lib/types";
+import { Service, TimeSlot, ServiceAddon } from "@/lib/types";
 import ServiceCard from "@/components/services/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { generateTimeSlots, formatPrice } from "@/lib/utils/booking";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
+import ServiceAddonsSelector from "@/components/booking/ServiceAddonsSelector";
 
 // Booking flow steps
 enum BookingStep {
@@ -31,6 +32,7 @@ const ServicePage = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<ServiceAddon[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const { toast } = useToast();
   
@@ -47,7 +49,7 @@ const ServicePage = () => {
     }
   }, [selectedDate, selectedService]);
   
-  // Update total price when extras change
+  // Update total price when extras or addons change
   useEffect(() => {
     if (selectedService) {
       let newTotal = selectedService.price;
@@ -57,9 +59,14 @@ const ServicePage = () => {
         newTotal += 10000; // $100
       }
       
+      // Add all selected add-ons prices
+      if (selectedAddons.length > 0) {
+        newTotal += selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+      }
+      
       setTotalPrice(newTotal);
     }
-  }, [selectedExtras, selectedService]);
+  }, [selectedExtras, selectedAddons, selectedService]);
   
   // Handle service selection
   const handleServiceSelect = (service: Service) => {
@@ -102,6 +109,11 @@ const ServicePage = () => {
         return [...prev, extraId];
       }
     });
+  };
+  
+  // Handle add-ons selection
+  const handleAddonsChange = (addons: ServiceAddon[]) => {
+    setSelectedAddons(addons);
   };
   
   // Proceed to next step
@@ -328,7 +340,15 @@ const ServicePage = () => {
         
         <h2 className="text-xl font-bold text-neutral-800 mb-6">Do you want to enjoy some extras ...</h2>
         
-        {/* Extras options */}
+        {/* Service Add-ons Selector */}
+        <div className="mb-6">
+          <ServiceAddonsSelector 
+            onAddonsChange={handleAddonsChange}
+            initialSelectedAddons={selectedAddons}
+          />
+        </div>
+        
+        {/* Legacy Extras options (keeping for backward compatibility) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white p-4 border border-neutral-200 rounded-lg">
             <h3 className="font-medium mb-2">Natural Sex</h3>
@@ -346,10 +366,27 @@ const ServicePage = () => {
           </div>
         </div>
         
+        {/* Selected Add-ons Summary */}
+        {selectedAddons.length > 0 && (
+          <div className="mb-6 bg-white p-4 border border-neutral-200 rounded-lg">
+            <h3 className="font-medium mb-3">Selected Add-ons</h3>
+            <div className="space-y-2">
+              {selectedAddons.map(addon => (
+                <div key={addon.id} className="flex justify-between items-center text-sm">
+                  <span>{addon.name}</span>
+                  <span className="font-medium text-primary">{formatPrice(addon.price).formatted}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Summary and Next Button */}
         <div className="flex justify-between items-center border-t border-neutral-200 pt-4">
           <div>
-            <div className="text-sm">Total duration: <span className="font-medium">{selectedService.duration} mins.</span></div>
+            <div className="text-sm">Total duration: <span className="font-medium">
+              {selectedService.duration + selectedAddons.reduce((sum, addon) => sum + addon.duration, 0)} mins.
+            </span></div>
             <div className="text-sm">Subtotal: <span className="font-medium">{formatPrice(totalPrice).formatted}</span></div>
           </div>
           <Button

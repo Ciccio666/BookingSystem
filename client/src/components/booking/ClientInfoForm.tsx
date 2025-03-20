@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Service } from "@/lib/types";
+import { Service, ServiceAddon } from "@/lib/types";
 import { formatPrice } from "@/lib/utils/booking";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -36,6 +36,8 @@ interface ClientInfoFormProps {
   selectedTime: string;
   onBack: () => void;
   onComplete: (bookingId: number) => void;
+  selectedAddons?: ServiceAddon[];
+  totalPrice?: number;
 }
 
 const ClientInfoForm = ({
@@ -44,10 +46,18 @@ const ClientInfoForm = ({
   selectedTime,
   onBack,
   onComplete,
+  selectedAddons = [],
+  totalPrice,
 }: ClientInfoFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const formattedPrice = formatPrice(service.price);
+  
+  // Calculate total price including all add-ons
+  const calculatedTotalPrice = totalPrice || service.price + 
+    (selectedAddons?.reduce((sum, addon) => sum + addon.price, 0) || 0);
+  
+  const formattedServicePrice = formatPrice(service.price);
+  const formattedTotalPrice = formatPrice(calculatedTotalPrice);
   
   // Convert selectedDate and selectedTime to a Date object for the booking
   const getBookingDateTime = () => {
@@ -98,9 +108,20 @@ const ClientInfoForm = ({
       // Prepare booking data
       const startTime = getBookingDateTime();
       
-      // Calculate end time - add service duration in minutes
+      // Calculate end time - add service duration in minutes + any add-on duration
+      const additionalDuration = selectedAddons.reduce((sum, addon) => sum + addon.duration, 0);
       const endTime = new Date(startTime.getTime());
-      endTime.setMinutes(endTime.getMinutes() + service.duration);
+      endTime.setMinutes(endTime.getMinutes() + service.duration + additionalDuration);
+      
+      // Format add-ons data for the API
+      const extrasData = selectedAddons.length > 0 ? {
+        addons: selectedAddons.map(addon => ({
+          id: addon.id,
+          name: addon.name,
+          price: addon.price,
+          duration: addon.duration
+        }))
+      } : null;
       
       const bookingData = {
         serviceId: service.id,
@@ -108,8 +129,8 @@ const ClientInfoForm = ({
         clientPhone: data.clientPhone,
         startTime: startTime.toISOString(), // Our schema will transform this to a Date object
         // endTime is omitted in insertBookingSchema and calculated on the server
-        extras: null,
-        totalPrice: service.price,
+        extras: extrasData,
+        totalPrice: calculatedTotalPrice,
       };
       
       // Submit booking to API
