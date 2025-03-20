@@ -17,9 +17,13 @@ export interface IStorage {
   
   // Service methods
   getServices(): Promise<Service[]>;
+  getActiveServices(): Promise<Service[]>;
   getService(id: number): Promise<Service | undefined>;
   createService(service: InsertService): Promise<Service>;
   updateService(id: number, service: Partial<InsertService>): Promise<Service | undefined>;
+  updateServicePosition(id: number, position: number): Promise<Service | undefined>;
+  updateServicesOrder(serviceIds: number[]): Promise<Service[]>;
+  deleteService(id: number): Promise<boolean>;
   
   // Availability methods
   getAvailabilityByProviderId(providerId: number): Promise<Availability[]>;
@@ -235,7 +239,15 @@ export class MemStorage implements IStorage {
 
   // Service methods
   async getServices(): Promise<Service[]> {
-    return Array.from(this.services.values());
+    // Return services sorted by position
+    return Array.from(this.services.values()).sort((a, b) => a.position - b.position);
+  }
+  
+  async getActiveServices(): Promise<Service[]> {
+    // Return only active services sorted by position
+    return Array.from(this.services.values())
+      .filter(service => service.active)
+      .sort((a, b) => a.position - b.position);
   }
 
   async getService(id: number): Promise<Service | undefined> {
@@ -244,7 +256,14 @@ export class MemStorage implements IStorage {
 
   async createService(insertService: InsertService): Promise<Service> {
     const id = this.currentServiceId++;
-    const service: Service = { ...insertService, id };
+    // Get the highest position value and add 1
+    const highestPosition = Math.max(
+      0,
+      ...Array.from(this.services.values()).map(s => s.position || 0)
+    );
+    const position = insertService.position !== undefined ? insertService.position : highestPosition + 1;
+    
+    const service: Service = { ...insertService, id, position };
     this.services.set(id, service);
     return service;
   }
@@ -256,6 +275,37 @@ export class MemStorage implements IStorage {
     const updatedService = { ...service, ...serviceUpdate };
     this.services.set(id, updatedService);
     return updatedService;
+  }
+  
+  async updateServicePosition(id: number, position: number): Promise<Service | undefined> {
+    const service = this.services.get(id);
+    if (!service) return undefined;
+    
+    const updatedService = { ...service, position };
+    this.services.set(id, updatedService);
+    return updatedService;
+  }
+  
+  async updateServicesOrder(serviceIds: number[]): Promise<Service[]> {
+    // Update position for each service based on its index in the array
+    const updatedServices = [];
+    
+    for (let i = 0; i < serviceIds.length; i++) {
+      const id = serviceIds[i];
+      const service = this.services.get(id);
+      
+      if (service) {
+        const updatedService = { ...service, position: i };
+        this.services.set(id, updatedService);
+        updatedServices.push(updatedService);
+      }
+    }
+    
+    return updatedServices;
+  }
+  
+  async deleteService(id: number): Promise<boolean> {
+    return this.services.delete(id);
   }
 
   // Availability methods

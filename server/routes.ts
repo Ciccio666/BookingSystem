@@ -104,9 +104,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Services endpoints
-  app.get('/api/services', async (_req: Request, res: Response) => {
+  app.get('/api/services', async (req: Request, res: Response) => {
     try {
-      const services = await storage.getServices();
+      // Check if we want only active services
+      const activeOnly = req.query.active === 'true';
+      
+      let services;
+      if (activeOnly) {
+        services = await storage.getActiveServices();
+      } else {
+        services = await storage.getServices();
+      }
+      
       res.json(services);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch services' });
@@ -166,6 +175,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedService);
     } catch (error) {
       res.status(500).json({ error: 'Failed to update service' });
+    }
+  });
+  
+  app.patch('/api/services/:id/position', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid service ID' });
+      }
+      
+      const service = await storage.getService(id);
+      if (!service) {
+        return res.status(404).json({ error: 'Service not found' });
+      }
+      
+      const { position } = req.body;
+      if (typeof position !== 'number') {
+        return res.status(400).json({ error: 'Position must be a number' });
+      }
+      
+      const updatedService = await storage.updateServicePosition(id, position);
+      res.json(updatedService);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update service position' });
+    }
+  });
+  
+  app.post('/api/services/order', async (req: Request, res: Response) => {
+    try {
+      const { serviceIds } = req.body;
+      if (!Array.isArray(serviceIds)) {
+        return res.status(400).json({ error: 'serviceIds must be an array' });
+      }
+      
+      const updatedServices = await storage.updateServicesOrder(serviceIds);
+      res.json(updatedServices);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update service order' });
+    }
+  });
+  
+  app.delete('/api/services/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid service ID' });
+      }
+      
+      const service = await storage.getService(id);
+      if (!service) {
+        return res.status(404).json({ error: 'Service not found' });
+      }
+      
+      const success = await storage.deleteService(id);
+      if (success) {
+        res.status(204).end();
+      } else {
+        res.status(500).json({ error: 'Failed to delete service' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete service' });
     }
   });
 

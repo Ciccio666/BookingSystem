@@ -24,6 +24,7 @@ export const services = pgTable("services", {
   duration: integer("duration").notNull(), // duration in minutes
   price: integer("price").notNull(), // price in cents
   active: boolean("active").default(true),
+  position: integer("position").default(0), // for ordering services
 });
 
 export const insertServiceSchema = createInsertSchema(services).omit({
