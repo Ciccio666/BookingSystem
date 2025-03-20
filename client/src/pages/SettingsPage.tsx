@@ -35,6 +35,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Service } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import WeeklySchedule from "@/components/availability/WeeklySchedule";
 import { 
   Clock, 
   Calendar, 
@@ -652,6 +653,24 @@ const SettingsPage = () => {
         
         {/* Availability Tab */}
         <TabsContent value="availability" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Provider Availability</CardTitle>
+              <CardDescription>Set when your services are available for booking</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WeeklySchedule
+                onSave={(schedule) => {
+                  console.log('Saved schedule:', schedule);
+                  toast({
+                    title: "Availability saved",
+                    description: "Your availability settings have been updated."
+                  });
+                }} 
+              />
+            </CardContent>
+          </Card>
+          
           <Card>
             <CardHeader>
               <CardTitle>Set Availability</CardTitle>
