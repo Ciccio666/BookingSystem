@@ -62,11 +62,16 @@ export const bookings = pgTable("bookings", {
   totalPrice: integer("total_price").notNull(), // price in cents
 });
 
-export const insertBookingSchema = createInsertSchema(bookings).omit({
-  id: true,
-  status: true,
-  endTime: true,
-});
+export const insertBookingSchema = createInsertSchema(bookings)
+  .omit({
+    id: true,
+    status: true,
+    endTime: true,
+  })
+  .extend({
+    // Transform ISO string to Date object for timestamp fields
+    startTime: z.string().transform((val) => new Date(val)),
+  });
 
 // Messages schema
 export const messages = pgTable("messages", {

@@ -51,15 +51,31 @@ const ClientInfoForm = ({
   
   // Convert selectedDate and selectedTime to a Date object for the booking
   const getBookingDateTime = () => {
-    const [hours, minutes] = selectedTime.split(':');
-    const isPM = selectedTime.toLowerCase().includes('pm');
+    // Handle time formats like "10:00 AM" or "10:00"
+    let hours = 0;
+    let minutes = 0;
     
-    let hour = parseInt(hours);
-    if (isPM && hour !== 12) hour += 12;
-    if (!isPM && hour === 12) hour = 0;
+    if (selectedTime.includes(':')) {
+      const timeParts = selectedTime.split(' ');
+      const [hourStr, minuteStr] = timeParts[0].split(':');
+      
+      hours = parseInt(hourStr);
+      minutes = parseInt(minuteStr);
+      
+      // If we have AM/PM indicator
+      if (timeParts.length > 1) {
+        const isPM = timeParts[1].toLowerCase() === 'pm';
+        if (isPM && hours !== 12) hours += 12;
+        if (!isPM && hours === 12) hours = 0;
+      }
+    } else {
+      // If it's just a number like "10"
+      hours = parseInt(selectedTime);
+    }
     
-    const date = new Date(selectedDate);
-    date.setHours(hour, parseInt(minutes), 0, 0);
+    // Create a clone of the date to avoid mutation
+    const date = new Date(selectedDate.getTime());
+    date.setHours(hours, minutes, 0, 0);
     
     return date;
   };
@@ -80,11 +96,18 @@ const ClientInfoForm = ({
     
     try {
       // Prepare booking data
+      const startTime = getBookingDateTime();
+      
+      // Calculate end time - add service duration in minutes
+      const endTime = new Date(startTime.getTime());
+      endTime.setMinutes(endTime.getMinutes() + service.duration);
+      
       const bookingData = {
         serviceId: service.id,
         clientName: data.clientName,
         clientPhone: data.clientPhone,
-        startTime: getBookingDateTime().toISOString(),
+        startTime: startTime.toISOString(), // Our schema will transform this to a Date object
+        // endTime is omitted in insertBookingSchema and calculated on the server
         extras: null,
         totalPrice: service.price,
       };
@@ -187,10 +210,6 @@ const ClientInfoForm = ({
               <span>{service.name}</span>
               <span className="font-medium text-primary">{formattedPrice.formatted}</span>
             </div>
-            <div className="flex justify-between text-sm mb-2">
-              <span>Natural Sex</span>
-              <span className="font-medium text-primary">AU$100.00</span>
-            </div>
           </div>
 
           {/* Total */}
@@ -198,7 +217,7 @@ const ClientInfoForm = ({
             <div className="flex justify-between items-center">
               <span className="font-medium">Total for booking:</span>
               <span className="font-bold text-xl text-primary">
-                AU$350.00
+                {formattedPrice.formatted}
               </span>
             </div>
           </div>
