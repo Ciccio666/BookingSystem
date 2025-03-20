@@ -2,10 +2,10 @@ import { Switch, Route } from "wouter";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 import Navigation from "@/components/layout/Navigation";
+import { Toaster } from "@/components/ui/toaster";
 
 // Lazy load pages for better performance
 const ServicePage = lazy(() => import("@/pages/ServicePage"));
-const BookingPage = lazy(() => import("@/pages/BookingPage"));
 const MessagingPage = lazy(() => import("@/pages/MessagingPage"));
 const AIChatPage = lazy(() => import("@/pages/AIChatPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
@@ -24,8 +24,6 @@ function Router() {
       <Switch>
         <Route path="/" component={ServicePage} />
         <Route path="/services" component={ServicePage} />
-        <Route path="/bookings" component={BookingPage} />
-        <Route path="/bookings/:id" component={BookingPage} />
         <Route path="/messaging" component={MessagingPage} />
         <Route path="/ai-chat" component={AIChatPage} />
         <Route path="/settings" component={SettingsPage} />
@@ -42,6 +40,7 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <Router />
       </main>
+      <Toaster />
     </div>
   );
 }
