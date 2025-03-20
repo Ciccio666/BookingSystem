@@ -414,10 +414,14 @@ const SettingsPage = () => {
       <h1 className="text-2xl font-bold text-neutral-800 mb-6">Settings</h1>
       
       <Tabs defaultValue="services" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 mb-6">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 mb-6">
           <TabsTrigger value="services" className="flex items-center">
             <DollarSign className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Services</span>
+          </TabsTrigger>
+          <TabsTrigger value="addons" className="flex items-center">
+            <PlusCircle className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Add-ons</span>
           </TabsTrigger>
           <TabsTrigger value="availability" className="flex items-center">
             <Calendar className="h-4 w-4 mr-2" />
@@ -651,6 +655,19 @@ const SettingsPage = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        {/* Service Add-ons Tab */}
+        <TabsContent value="addons" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Service Add-ons</CardTitle>
+              <CardDescription>Manage additional services clients can add to their bookings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ServiceAddonList />
+            </CardContent>
+          </Card>
         </TabsContent>
         
         {/* Availability Tab */}

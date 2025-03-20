@@ -1,7 +1,6 @@
-import { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Image, Upload, X } from 'lucide-react';
+import { ImageIcon, UploadIcon, X } from 'lucide-react';
 
 interface ServicePhotoUploadProps {
   initialImageUrl?: string;
@@ -9,120 +8,138 @@ interface ServicePhotoUploadProps {
   required?: boolean;
 }
 
-const ServicePhotoUpload = ({ 
+const ServicePhotoUpload: React.FC<ServicePhotoUploadProps> = ({ 
   initialImageUrl, 
   onImageChange,
-  required = true 
-}: ServicePhotoUploadProps) => {
-  const [imagePreview, setImagePreview] = useState<string | null>(initialImageUrl || null);
+  required = false
+}) => {
+  const [imageUrl, setImageUrl] = useState<string | undefined>(initialImageUrl);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    if (!file) {
-      return;
-    }
-    
-    // Validate file type
-    if (!file.type.match('image.*')) {
-      setError('Please select an image file (JPEG, PNG, etc.)');
-      return;
-    }
-    
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size should be less than 5MB');
-      return;
-    }
-    
-    // Reset error
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     setError(null);
     
-    // Convert to base64
+    if (!file) return;
+    
+    // File type validation
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+    
+    // File size validation (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Image size must be less than 2MB');
+      return;
+    }
+    
+    setIsUploading(true);
+    
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      setImagePreview(base64);
-      onImageChange(base64);
+    reader.onload = (e) => {
+      const imgData = e.target?.result as string;
+      setImageUrl(imgData);
+      onImageChange(imgData);
+      setIsUploading(false);
     };
+    
+    reader.onerror = () => {
+      setError('Failed to read the image file');
+      setIsUploading(false);
+    };
+    
     reader.readAsDataURL(file);
   };
   
-  const handleRemoveImage = () => {
-    setImagePreview(null);
+  const handleRemove = () => {
+    setImageUrl(undefined);
     onImageChange(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
   
-  const triggerFileInput = () => {
+  const handleUploadClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
-
+  
   return (
-    <div className="space-y-2">
-      <Label htmlFor="service-photo">
-        Service Photo {required && <span className="text-red-500">*</span>}
-      </Label>
+    <div className="w-full">
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        required={required}
+      />
       
-      <div className="border-2 border-dashed rounded-lg p-4 text-center">
-        {!imagePreview ? (
-          <div 
-            className="flex flex-col items-center justify-center gap-2 cursor-pointer py-6"
-            onClick={triggerFileInput}
+      {imageUrl ? (
+        <div className="relative rounded-md overflow-hidden border border-gray-200">
+          <img 
+            src={imageUrl} 
+            alt="Service" 
+            className="w-full h-48 object-cover"
+          />
+          <Button 
+            variant="destructive" 
+            size="sm"
+            className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
+            onClick={handleRemove}
           >
-            <Image className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Click to upload service photo
-            </p>
-            <p className="text-xs text-muted-foreground">
-              JPEG, PNG or GIF (max. 5MB)
-            </p>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div 
+          className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors ${
+            error ? 'border-red-400' : 'border-gray-300'
+          }`}
+          onClick={handleUploadClick}
+        >
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <span className="text-sm font-medium">Upload an image</span>
+              <span className="text-xs text-gray-500">
+                Click to upload or drag and drop
+              </span>
+            </div>
             <Button 
               type="button" 
               variant="outline" 
-              size="sm" 
+              size="sm"
               className="mt-2"
+              disabled={isUploading}
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Photo
+              {isUploading ? (
+                <span>Uploading...</span>
+              ) : (
+                <>
+                  <UploadIcon className="h-4 w-4 mr-2" />
+                  Select Image
+                </>
+              )}
             </Button>
           </div>
-        ) : (
-          <div className="relative">
-            <img 
-              src={imagePreview} 
-              alt="Service Preview" 
-              className="max-h-48 mx-auto object-contain"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-background opacity-80 hover:opacity-100"
-              onClick={handleRemoveImage}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-        
-        <input
-          id="service-photo"
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageChange}
-        />
-      </div>
+        </div>
+      )}
       
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-500 mt-1">{error}</p>
+      )}
+      
+      <p className="text-xs text-gray-500 mt-1">
+        {required ? 'Required. ' : ''}
+        Max size: 2MB. Formats: JPG, PNG, GIF.
+      </p>
     </div>
   );
 };

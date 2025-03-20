@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ServiceAddon } from '@/lib/types';
-import ServiceAddonCard from '../services/ServiceAddonCard';
+import ServiceAddonCard from '@/components/services/ServiceAddonCard';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatPrice } from '@/lib/utils/booking';
 
 interface ServiceAddonsSelectorProps {
@@ -9,73 +12,86 @@ interface ServiceAddonsSelectorProps {
   initialSelectedAddons?: ServiceAddon[];
 }
 
-const ServiceAddonsSelector = ({
+const ServiceAddonsSelector: React.FC<ServiceAddonsSelectorProps> = ({
   onAddonsChange,
-  initialSelectedAddons = []
-}: ServiceAddonsSelectorProps) => {
+  initialSelectedAddons = [],
+}) => {
   const [selectedAddons, setSelectedAddons] = useState<ServiceAddon[]>(initialSelectedAddons);
   
-  const {
-    data: addons = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['/api/service-addons', { active: true }],
-    queryFn: async () => {
-      const response = await fetch('/api/service-addons?active=true');
-      if (!response.ok) {
-        throw new Error('Failed to fetch service add-ons');
-      }
-      return response.json();
-    },
+  const { data: addons = [] as ServiceAddon[], isLoading, error } = useQuery<ServiceAddon[]>({
+    queryKey: ['/api/service-addons'],
     staleTime: 1000 * 60, // 1 minute
   });
-
-  // Filter for add-ons that should be displayed on the booking page
+  
+  // Filter displayed add-ons to only show active ones and those marked for booking page
   const visibleAddons = addons.filter((addon: ServiceAddon) => 
     addon.active && addon.displayOnBookingPage
   );
-
+  
   useEffect(() => {
     onAddonsChange(selectedAddons);
   }, [selectedAddons, onAddonsChange]);
-
+  
   const handleAddonToggle = (addon: ServiceAddon, selected: boolean) => {
     if (selected) {
-      setSelectedAddons((prev) => [...prev, addon]);
+      setSelectedAddons([...selectedAddons, addon]);
     } else {
-      setSelectedAddons((prev) => prev.filter((a) => a.id !== addon.id));
+      setSelectedAddons(selectedAddons.filter(a => a.id !== addon.id));
     }
   };
-
-  const calculateTotalPrice = () => {
-    return selectedAddons.reduce((total, addon) => total + addon.price, 0);
+  
+  const calculateTotal = () => {
+    if (selectedAddons.length === 0) return formatPrice(0);
+    return formatPrice(selectedAddons.reduce((sum, addon) => sum + addon.price, 0));
   };
-
-  const totalAddonPrice = calculateTotalPrice();
-  const formattedTotalPrice = formatPrice(totalAddonPrice);
-
+  
   if (isLoading) {
-    return <div className="py-4 text-center">Loading add-ons...</div>;
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="rounded-lg border overflow-hidden">
+              <Skeleton className="h-32 w-full" />
+              <div className="p-4">
+                <Skeleton className="h-6 w-2/3 mb-2" />
+                <Skeleton className="h-4 w-full mb-1" />
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
-
+  
   if (error) {
-    return <div className="py-4 text-center text-red-500">Error loading add-ons</div>;
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Failed to load service add-ons. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
   }
-
+  
   if (visibleAddons.length === 0) {
-    return null; // Don't show the section if no add-ons are available
+    return (
+      <div className="text-center py-6 bg-gray-50 rounded-lg">
+        <p className="text-gray-600">No add-ons available for this service.</p>
+      </div>
+    );
   }
-
+  
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Service Add-ons (Optional)</h3>
-      <p className="text-sm text-muted-foreground">
-        Enhance your experience by selecting from these additional services.
-      </p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        {visibleAddons.map((addon: ServiceAddon) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {visibleAddons.map((addon) => (
           <ServiceAddonCard
             key={addon.id}
             addon={addon}
@@ -86,11 +102,11 @@ const ServiceAddonsSelector = ({
       </div>
       
       {selectedAddons.length > 0 && (
-        <div className="flex justify-between items-center border-t pt-4 mt-4">
-          <div className="font-medium">Selected Add-ons Total:</div>
-          <div className="text-lg font-semibold text-primary">
-            {formattedTotalPrice.formatted}
-          </div>
+        <div className="flex justify-between p-4 bg-gray-50 rounded-lg mt-4">
+          <span className="font-medium">Selected add-ons:</span>
+          <span className="font-semibold text-primary">
+            AU${calculateTotal().formatted}
+          </span>
         </div>
       )}
     </div>
