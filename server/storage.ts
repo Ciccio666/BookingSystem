@@ -1,6 +1,7 @@
 import { 
   users, type User, type InsertUser,
   services, type Service, type InsertService,
+  serviceAddons, type ServiceAddon, type InsertServiceAddon,
   availability, type Availability, type InsertAvailability,
   bookings, type Booking, type InsertBooking,
   messages, type Message, type InsertMessage,
@@ -24,6 +25,16 @@ export interface IStorage {
   updateServicePosition(id: number, position: number): Promise<Service | undefined>;
   updateServicesOrder(serviceIds: number[]): Promise<Service[]>;
   deleteService(id: number): Promise<boolean>;
+  
+  // Service Add-ons methods
+  getServiceAddons(): Promise<ServiceAddon[]>;
+  getActiveServiceAddons(): Promise<ServiceAddon[]>;
+  getServiceAddon(id: number): Promise<ServiceAddon | undefined>;
+  createServiceAddon(addon: InsertServiceAddon): Promise<ServiceAddon>;
+  updateServiceAddon(id: number, addon: Partial<InsertServiceAddon>): Promise<ServiceAddon | undefined>;
+  updateServiceAddonPosition(id: number, position: number): Promise<ServiceAddon | undefined>;
+  updateServiceAddonsOrder(addonIds: number[]): Promise<ServiceAddon[]>;
+  deleteServiceAddon(id: number): Promise<boolean>;
   
   // Availability methods
   getAvailabilityByProviderId(providerId: number): Promise<Availability[]>;
@@ -66,6 +77,7 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private services: Map<number, Service>;
+  private serviceAddons: Map<number, ServiceAddon>;
   private availabilities: Map<number, Availability>;
   private bookings: Map<number, Booking>;
   private messages: Map<number, Message>;
@@ -75,6 +87,7 @@ export class MemStorage implements IStorage {
   
   private currentUserId: number;
   private currentServiceId: number;
+  private currentServiceAddonId: number;
   private currentAvailabilityId: number;
   private currentBookingId: number;
   private currentMessageId: number;

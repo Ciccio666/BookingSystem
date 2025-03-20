@@ -34,6 +34,24 @@ export const insertServiceSchema = createInsertSchema(services).omit({
   id: true,
 });
 
+// Service Add-ons schema
+export const serviceAddons = pgTable("service_addons", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: integer("price").notNull(), // price in cents
+  active: boolean("active").default(true),
+  position: integer("position").default(0), // for ordering add-ons
+  photo: text("photo"), // Base64 encoded add-on image
+  duration: integer("duration").default(0), // additional duration in minutes
+  displayOnBookingPage: boolean("display_on_booking_page").default(true),
+  addPriceToDeposit: boolean("add_price_to_deposit").default(false),
+});
+
+export const insertServiceAddonSchema = createInsertSchema(serviceAddons).omit({
+  id: true,
+});
+
 // Availability schema
 export const availability = pgTable("availability", {
   id: serial("id").primaryKey(),
@@ -140,6 +158,9 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Service = typeof services.$inferSelect;
 export type InsertService = z.infer<typeof insertServiceSchema>;
+
+export type ServiceAddon = typeof serviceAddons.$inferSelect;
+export type InsertServiceAddon = z.infer<typeof insertServiceAddonSchema>;
 
 export type Availability = typeof availability.$inferSelect;
 export type InsertAvailability = z.infer<typeof insertAvailabilitySchema>;

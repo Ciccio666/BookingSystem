@@ -35,9 +35,8 @@ const ServicePage = () => {
   const { toast } = useToast();
   
   // Fetch only active services from API, sorted by position
-  const { data: services, isLoading, error } = useQuery({
-    queryKey: ['/api/services', { active: true }],
-    queryFn: () => fetch('/api/services?active=true').then(res => res.json())
+  const { data: services = [], isLoading, error } = useQuery<Service[]>({
+    queryKey: ['/api/services']
   });
   
   // Update time slots when selected date or service changes
@@ -217,7 +216,7 @@ const ServicePage = () => {
         
         {services && services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {services.map((service: Service) => (
+            {services.filter(service => service.active).map((service: Service) => (
               <div key={service.id} className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="p-4">
                   <h3 className="font-bold text-lg text-neutral-800 mb-2">{service.name}</h3>
