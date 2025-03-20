@@ -1,33 +1,24 @@
 import React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { ServiceAddon } from '@/lib/types';
 import ServicePhotoUpload from './ServicePhotoUpload';
 
-// Validation schema
 const serviceAddonFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, 'Price must be 0 or greater'),
-  duration: z.coerce.number().min(0, 'Duration must be 0 or greater'),
+  price: z.coerce.number().min(0, 'Price must be a positive number'),
+  duration: z.coerce.number().min(0, 'Duration must be a positive number'),
+  photo: z.string().optional().nullable(),
   active: z.boolean().default(true),
-  photo: z.string().nullable().optional(),
   displayOnBookingPage: z.boolean().default(true),
-  addPriceToDeposit: z.boolean().default(false)
+  addPriceToDeposit: z.boolean().default(false),
 });
 
 type ServiceAddonFormValues = z.infer<typeof serviceAddonFormSchema>;
@@ -45,21 +36,21 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
     defaultValues: {
       name: initialData?.name || '',
       description: initialData?.description || '',
-      price: initialData?.price ? initialData.price / 100 : 0, // Convert cents to dollars for display
+      price: initialData ? initialData.price / 100 : 0, // Convert from cents to dollars for display
       duration: initialData?.duration || 0,
-      active: initialData?.active ?? true,
       photo: initialData?.photo || null,
+      active: initialData?.active ?? true,
       displayOnBookingPage: initialData?.displayOnBookingPage ?? true,
-      addPriceToDeposit: initialData?.addPriceToDeposit ?? false
-    }
+      addPriceToDeposit: initialData?.addPriceToDeposit ?? false,
+    },
   });
   
   const handleSubmit = async (data: ServiceAddonFormValues) => {
     try {
-      // Convert dollars to cents for storage
+      // Convert price back to cents for storage
       const formattedData = {
         ...data,
-        price: Math.round(data.price * 100)
+        price: Math.round(data.price * 100),
       };
       
       await onSubmit(formattedData);
@@ -76,9 +67,9 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Name*</FormLabel>
               <FormControl>
-                <Input placeholder="Enter add-on name" {...field} />
+                <Input placeholder="e.g. Extended Massage" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -93,7 +84,7 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Describe the add-on service" 
+                  placeholder="Describe the add-on service..." 
                   {...field} 
                   value={field.value || ''}
                 />
@@ -103,23 +94,22 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
           )}
         />
         
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="price"
             render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Price ($)</FormLabel>
+              <FormItem>
+                <FormLabel>Price (AU$)*</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
                     min="0" 
                     step="0.01" 
                     placeholder="0.00" 
-                    {...field}
+                    {...field} 
                   />
                 </FormControl>
-                <FormDescription>Price in dollars</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -129,7 +119,7 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
             control={form.control}
             name="duration"
             render={({ field }) => (
-              <FormItem className="flex-1">
+              <FormItem>
                 <FormLabel>Additional Duration (minutes)</FormLabel>
                 <FormControl>
                   <Input 
@@ -137,10 +127,9 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
                     min="0" 
                     step="1" 
                     placeholder="0" 
-                    {...field}
+                    {...field} 
                   />
                 </FormControl>
-                <FormDescription>Additional time added to booking</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -157,26 +146,24 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
                 <ServicePhotoUpload
                   initialImageUrl={field.value || undefined}
                   onImageChange={(imageBase64) => field.onChange(imageBase64)}
-                  required={false}
                 />
               </FormControl>
-              <FormDescription>Upload an image for this add-on (optional)</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="space-y-4">
           <FormField
             control={form.control}
             name="active"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 flex-1">
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base mb-1">Active</FormLabel>
-                  <FormDescription>
-                    When active, this add-on will be available for selection
-                  </FormDescription>
+                  <FormLabel>Active</FormLabel>
+                  <div className="text-sm text-gray-500">
+                    Make this add-on available for booking
+                  </div>
                 </div>
                 <FormControl>
                   <Switch
@@ -184,23 +171,20 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-6">
+          
           <FormField
             control={form.control}
             name="displayOnBookingPage"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 flex-1">
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base mb-1">Display on Booking Page</FormLabel>
-                  <FormDescription>
-                    Allow clients to select this add-on during booking
-                  </FormDescription>
+                  <FormLabel>Show on Booking Page</FormLabel>
+                  <div className="text-sm text-gray-500">
+                    Display this add-on on the client booking page
+                  </div>
                 </div>
                 <FormControl>
                   <Switch
@@ -208,7 +192,6 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -217,12 +200,12 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
             control={form.control}
             name="addPriceToDeposit"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 flex-1">
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base mb-1">Add to Deposit</FormLabel>
-                  <FormDescription>
-                    Include the price of this add-on in the required deposit
-                  </FormDescription>
+                  <FormLabel>Add to Deposit</FormLabel>
+                  <div className="text-sm text-gray-500">
+                    Include this add-on's price in the required booking deposit
+                  </div>
                 </div>
                 <FormControl>
                   <Switch
@@ -230,18 +213,17 @@ const ServiceAddonForm = ({ initialData, onSubmit, onCancel, isEdit = false }: S
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
         </div>
         
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="submit">
-            {isEdit ? 'Update Add-on' : 'Create Add-on'}
+            {isEdit ? 'Update' : 'Create'} Add-on
           </Button>
         </div>
       </form>

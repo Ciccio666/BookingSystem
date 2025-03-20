@@ -1,178 +1,227 @@
 import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PlusCircle, AlertTriangle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ServiceAddon } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Plus, AlertTriangle, MoveVertical } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { apiRequest } from '@/lib/queryClient';
 import ServiceAddonCard from './ServiceAddonCard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import ServiceAddonForm from './ServiceAddonForm';
 import { useToast } from '@/hooks/use-toast';
 
 const ServiceAddonList = () => {
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingAddon, setEditingAddon] = useState<ServiceAddon | null>(null);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  const {
-    data: addons = [] as ServiceAddon[],
-    isLoading,
-    error,
-  } = useQuery<ServiceAddon[]>({
+  
+  const queryClient = useQueryClient();
+  
+  const { data: addons = [], isLoading, error } = useQuery<ServiceAddon[]>({
     queryKey: ['/api/service-addons'],
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
-
+  
   const createAddonMutation = useMutation({
-    mutationFn: async (newAddon: Partial<ServiceAddon>) => {
+    mutationFn: async (newAddon: any) => {
       return apiRequest('POST', '/api/service-addons', newAddon);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/service-addons'] });
+      setIsAddModalOpen(false);
       toast({
-        title: 'Success',
-        description: 'Service add-on created successfully',
+        title: "Add-on created",
+        description: "The service add-on has been created successfully.",
       });
-      setShowAddDialog(false);
     },
     onError: (error) => {
       toast({
-        title: 'Error',
-        description: `Failed to create service add-on: ${error}`,
-        variant: 'destructive',
+        title: "Error creating add-on",
+        description: error.message || "There was an error creating the service add-on.",
+        variant: "destructive",
       });
     },
   });
-
+  
   const updateAddonMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<ServiceAddon> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return apiRequest('PATCH', `/api/service-addons/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/service-addons'] });
-      toast({
-        title: 'Success',
-        description: 'Service add-on updated successfully',
-      });
       setEditingAddon(null);
+      toast({
+        title: "Add-on updated",
+        description: "The service add-on has been updated successfully.",
+      });
     },
     onError: (error) => {
       toast({
-        title: 'Error',
-        description: `Failed to update service add-on: ${error}`,
-        variant: 'destructive',
+        title: "Error updating add-on",
+        description: error.message || "There was an error updating the service add-on.",
+        variant: "destructive",
       });
     },
   });
-
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      return apiRequest('PATCH', `/api/service-addons/${id}`, { active });
+  
+  const updateAddonOrderMutation = useMutation({
+    mutationFn: async (addonIds: number[]) => {
+      return apiRequest('POST', '/api/service-addons/order', { addonIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/service-addons'] });
+      toast({
+        title: "Order updated",
+        description: "The add-on order has been updated successfully.",
+      });
     },
     onError: (error) => {
       toast({
-        title: 'Error',
-        description: `Failed to update service add-on status: ${error}`,
-        variant: 'destructive',
+        title: "Error updating order",
+        description: error.message || "There was an error updating the order.",
+        variant: "destructive",
       });
     },
   });
-
-  const handleCreateAddon = async (data: Partial<ServiceAddon>) => {
-    createAddonMutation.mutate(data);
+  
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    
+    if (startIndex === endIndex) return;
+    
+    const newOrderedItems = Array.from(addons);
+    const [removed] = newOrderedItems.splice(startIndex, 1);
+    newOrderedItems.splice(endIndex, 0, removed);
+    
+    // Get array of addon IDs in the new order
+    const newOrderIds = newOrderedItems.map(addon => addon.id);
+    
+    // Update order in the backend
+    updateAddonOrderMutation.mutate(newOrderIds);
   };
-
-  const handleUpdateAddon = async (data: Partial<ServiceAddon>) => {
-    if (editingAddon) {
-      updateAddonMutation.mutate({ id: editingAddon.id, data });
-    }
-  };
-
+  
   const handleToggleActive = (addon: ServiceAddon) => {
-    toggleActiveMutation.mutate({
+    updateAddonMutation.mutate({
       id: addon.id,
-      active: !addon.active,
+      data: { active: !addon.active }
     });
   };
-
-  if (isLoading) return <div className="py-8 text-center">Loading add-ons...</div>;
-
+  
+  const handleEditAddon = (addon: ServiceAddon) => {
+    setEditingAddon(addon);
+  };
+  
+  const handleCreateAddon = async (data: any) => {
+    await createAddonMutation.mutateAsync(data);
+  };
+  
+  const handleUpdateAddon = async (data: any) => {
+    if (editingAddon) {
+      await updateAddonMutation.mutateAsync({ id: editingAddon.id, data });
+    }
+  };
+  
+  if (isLoading) {
+    return <div className="p-6">Loading service add-ons...</div>;
+  }
+  
   if (error) {
     return (
       <Alert variant="destructive" className="my-4">
         <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>Failed to load service add-ons.</AlertDescription>
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Failed to load service add-ons. Please try again later.
+        </AlertDescription>
       </Alert>
     );
   }
-
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Service Add-ons</h3>
-        <Button
-          onClick={() => setShowAddDialog(true)}
-          className="flex items-center gap-1"
-        >
-          <PlusCircle className="h-4 w-4 mr-1" />
-          Add New
+        <h2 className="text-xl font-semibold">Service Add-ons</h2>
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Add-on
         </Button>
       </div>
-
-      {addons && addons.length === 0 ? (
-        <div className="text-center py-8 border rounded-lg bg-muted/20">
-          <p className="text-muted-foreground">No service add-ons found. Add one to get started.</p>
+      
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-4 border-b">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">Manage Add-ons</h3>
+            <div className="flex items-center text-sm text-gray-500">
+              <MoveVertical className="h-4 w-4 mr-1" />
+              <span>Drag to reorder</span>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {addons && addons.map((addon) => (
-            <ServiceAddonCard
-              key={addon.id}
-              addon={addon}
-              showControls
-              onEdit={() => setEditingAddon(addon)}
-              onToggleActive={handleToggleActive}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Add Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl">
+        
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="service-addons">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="p-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {addons.map((addon, index) => (
+                    <Draggable key={addon.id.toString()} draggableId={addon.id.toString()} index={index}>
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <ServiceAddonCard
+                            addon={addon}
+                            showControls={true}
+                            onEdit={handleEditAddon}
+                            onToggleActive={handleToggleActive}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </div>
+      
+      {/* Add Add-on Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Service Add-on</DialogTitle>
-            <DialogDescription>
-              Create a new service add-on that clients can select during booking.
-            </DialogDescription>
           </DialogHeader>
-          <ServiceAddonForm
-            onSubmit={handleCreateAddon}
-            onCancel={() => setShowAddDialog(false)}
+          <ServiceAddonForm 
+            onSubmit={handleCreateAddon} 
+            onCancel={() => setIsAddModalOpen(false)} 
           />
         </DialogContent>
       </Dialog>
-
-      {/* Edit Dialog */}
+      
+      {/* Edit Add-on Modal */}
       <Dialog open={!!editingAddon} onOpenChange={(open) => !open && setEditingAddon(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Service Add-on</DialogTitle>
-            <DialogDescription>
-              Update the details of this service add-on.
-            </DialogDescription>
           </DialogHeader>
           {editingAddon && (
-            <ServiceAddonForm
+            <ServiceAddonForm 
               initialData={editingAddon}
-              onSubmit={handleUpdateAddon}
-              onCancel={() => setEditingAddon(null)}
-              isEdit
+              onSubmit={handleUpdateAddon} 
+              onCancel={() => setEditingAddon(null)} 
+              isEdit={true}
             />
           )}
         </DialogContent>
