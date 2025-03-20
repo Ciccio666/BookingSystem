@@ -26,7 +26,7 @@ const Navigation = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/">
-              <a className="text-primary font-bold text-xl">BookMe</a>
+              <span className="text-primary font-bold text-xl cursor-pointer">BookMe</span>
             </Link>
           </div>
           
@@ -34,15 +34,15 @@ const Navigation = () => {
             <nav className="flex space-x-8" aria-label="Tabs">
               {navItems.map((item) => (
                 <Link key={item.name} href={item.path}>
-                  <a 
-                    className={`border-b-2 px-1 pb-4 pt-4 font-medium ${
+                  <span 
+                    className={`border-b-2 px-1 pb-4 pt-4 font-medium cursor-pointer ${
                       isActive(item.path)
                         ? "border-primary text-primary"
                         : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
                     }`}
                   >
                     {item.name}
-                  </a>
+                  </span>
                 </Link>
               ))}
             </nav>
@@ -63,15 +63,15 @@ const Navigation = () => {
           <nav className="-mb-px flex space-x-6 overflow-x-auto pb-1" aria-label="Tabs">
             {navItems.map((item) => (
               <Link key={item.name} href={item.path}>
-                <a 
-                  className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium ${
+                <span 
+                  className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium cursor-pointer ${
                     isActive(item.path)
                       ? "border-primary text-primary"
                       : "border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300"
                   }`}
                 >
                   {item.name}
-                </a>
+                </span>
               </Link>
             ))}
           </nav>
