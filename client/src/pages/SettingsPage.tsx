@@ -217,17 +217,46 @@ const SettingsPage = () => {
   };
   
   // Function to handle drag end
-  const handleDragEnd = () => {
+  const handleDragEnd = async () => {
     setDraggingIndex(null);
-    toast({
-      title: "Service order updated",
-      description: "The service order has been updated successfully.",
-    });
-    // Here you would typically make an API call to save the new order
+    
+    // Get all service IDs in their current order
+    const serviceIds = serviceList.map(service => service.id);
+    
+    try {
+      // Make API call to update the order
+      const response = await fetch('/api/services/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serviceIds }),
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Service order updated",
+          description: "The service order has been updated successfully.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update service order.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating service order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update service order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Function to move service up in the list
-  const moveServiceUp = (index: number) => {
+  const moveServiceUp = async (index: number) => {
     if (index === 0) return; // Already at the top
     
     const newList = [...serviceList];
@@ -236,14 +265,42 @@ const SettingsPage = () => {
     newList[index - 1] = temp;
     
     setServiceList(newList);
-    toast({
-      title: "Service moved up",
-      description: `${newList[index - 1].name} has been moved up in the list.`,
-    });
+    
+    try {
+      // Make API call to update the order
+      const serviceIds = newList.map(service => service.id);
+      const response = await fetch('/api/services/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serviceIds }),
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Service moved up",
+          description: `${newList[index - 1].name} has been moved up in the list.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update service order.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating service order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update service order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Function to move service down in the list
-  const moveServiceDown = (index: number) => {
+  const moveServiceDown = async (index: number) => {
     if (index === serviceList.length - 1) return; // Already at the bottom
     
     const newList = [...serviceList];
@@ -252,27 +309,80 @@ const SettingsPage = () => {
     newList[index + 1] = temp;
     
     setServiceList(newList);
-    toast({
-      title: "Service moved down",
-      description: `${newList[index + 1].name} has been moved down in the list.`,
-    });
+    
+    try {
+      // Make API call to update the order
+      const serviceIds = newList.map(service => service.id);
+      const response = await fetch('/api/services/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serviceIds }),
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Service moved down",
+          description: `${newList[index + 1].name} has been moved down in the list.`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update service order.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating service order:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update service order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Function to toggle service active state
-  const toggleServiceActive = (id: number, isActive: boolean) => {
-    const updatedList = serviceList.map(service => 
-      service.id === id ? { ...service, active: isActive } : service
-    );
-    
-    setServiceList(updatedList);
-    
-    // Here we would make an API call to update the service in the backend
-    // For now, just show a toast
-    const service = serviceList.find(s => s.id === id);
-    if (service) {
+  const toggleServiceActive = async (id: number, isActive: boolean) => {
+    try {
+      // Make API call to update the service
+      const response = await fetch(`/api/services/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ active: isActive }),
+      });
+      
+      if (response.ok) {
+        // Update local state if API call was successful
+        const updatedList = serviceList.map(service => 
+          service.id === id ? { ...service, active: isActive } : service
+        );
+        
+        setServiceList(updatedList);
+        
+        const service = serviceList.find(s => s.id === id);
+        if (service) {
+          toast({
+            title: `Service ${isActive ? 'activated' : 'deactivated'}`,
+            description: `${service.name} is now ${isActive ? 'active' : 'inactive'}.`
+          });
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to update service status.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating service status:", error);
       toast({
-        title: `Service ${isActive ? 'activated' : 'deactivated'}`,
-        description: `${service.name} is now ${isActive ? 'active' : 'inactive'}.`
+        title: "Error",
+        description: "Failed to update service status. Please try again.",
+        variant: "destructive",
       });
     }
   };

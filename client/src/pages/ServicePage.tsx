@@ -29,9 +29,10 @@ const ServicePage = () => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const { toast } = useToast();
   
-  // Fetch services from API
+  // Fetch only active services from API, sorted by position
   const { data: services, isLoading, error } = useQuery({
-    queryKey: ['/api/services'],
+    queryKey: ['/api/services', { active: true }],
+    queryFn: () => fetch('/api/services?active=true').then(res => res.json())
   });
   
   // Update time slots when selected date or service changes
@@ -136,16 +137,13 @@ const ServicePage = () => {
 
   // Service Selection Step
   if (currentStep === BookingStep.SERVICE_SELECTION) {
-    // Filter to only show active services
-    const activeServices = services ? services.filter((service: Service) => service.active) : [];
-    
     return (
       <div>
         <h1 className="text-2xl font-bold text-neutral-800 mb-6">Select a Service</h1>
         
-        {activeServices && activeServices.length > 0 ? (
+        {services && services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeServices.map((service: Service) => (
+            {services.map((service: Service) => (
               <ServiceCard
                 key={service.id}
                 service={service}
