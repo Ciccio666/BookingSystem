@@ -35,24 +35,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
   // WebSocket server for real-time messaging
-  const wss = new WebSocketServer({ server: httpServer });
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    // Simple configuration without custom protocol handling
+    perMessageDeflate: false
+  });
   
   wss.on('connection', (ws) => {
     console.log('New WebSocket connection established');
     
+    // Send a welcome message to confirm connection
+    ws.send(JSON.stringify({
+      type: 'connection_established',
+      message: 'Connected to messaging server'
+    }));
+    
     ws.on('message', (message) => {
-      console.log('Received message:', message.toString());
-      // Handle different message types here
+      try {
+        console.log('Received message:', message.toString());
+        // Echo the message back to confirm receipt
+        ws.send(JSON.stringify({
+          type: 'message_received',
+          data: message.toString()
+        }));
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
     });
     
     ws.on('close', () => {
       console.log('WebSocket connection closed');
     });
   });
+  
+  // Handle WebSocket server errors
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+  });
 
   // Health check endpoint
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok' });
+  });
+  
+  // Test route for debugging
+  app.get('/test', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Test Page</title>
+        </head>
+        <body>
+          <h1>Server is working!</h1>
+          <p>The server is responding correctly. If you can see this, the basic Express functionality is working.</p>
+          <script>
+            // Add this to test if client-side JS is working
+            document.body.innerHTML += '<p>JavaScript is working too!</p>';
+          </script>
+        </body>
+      </html>
+    `);
   });
 
   // Services endpoints
