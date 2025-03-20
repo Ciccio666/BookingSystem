@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 // Lazy load pages for better performance
 const ServicePage = lazy(() => import("@/pages/ServicePage"));
 const MessagingPage = lazy(() => import("@/pages/MessagingPage"));
+const MessageToolsPage = lazy(() => import("@/pages/MessageToolsPage"));
 const AIChatPage = lazy(() => import("@/pages/AIChatPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/" component={ServicePage} />
         <Route path="/services" component={ServicePage} />
         <Route path="/messaging" component={MessagingPage} />
+        <Route path="/message-tools" component={MessageToolsPage} />
         <Route path="/ai-chat" component={AIChatPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route component={NotFound} />

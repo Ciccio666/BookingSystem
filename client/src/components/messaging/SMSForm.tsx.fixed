@@ -62,7 +62,13 @@ const SMSForm = () => {
       };
       
       // Send the message to the API
-      const response = await apiRequest("POST", '/api/messages', message);
+      const response = await apiRequest<Message>('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(message)
+      } as RequestInit);
       
       toast({
         title: "SMS sent successfully",
@@ -97,7 +103,13 @@ const SMSForm = () => {
       };
       
       // Send the message to the API
-      const response = await apiRequest("POST", '/api/messages', message);
+      const response = await apiRequest<Message>('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(message)
+      } as RequestInit);
       
       toast({
         title: "WhatsApp message sent successfully",

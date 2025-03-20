@@ -10,6 +10,7 @@ const Navigation = () => {
     { name: "Services", path: "/services" },
     { name: "Bookings", path: "/bookings" },
     { name: "Messages", path: "/messaging" },
+    { name: "Message Tools", path: "/message-tools" },
     { name: "AI Chat", path: "/ai-chat" },
     { name: "Settings", path: "/settings" }
   ];

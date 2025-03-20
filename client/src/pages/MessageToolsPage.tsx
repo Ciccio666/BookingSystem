@@ -19,8 +19,9 @@ const MessageToolsPage = () => {
     queryKey: ['/api/messages'],
     queryFn: async () => {
       try {
-        const response = await apiRequest('/api/messages');
-        return response as Message[];
+        const response = await apiRequest("GET", '/api/messages');
+        const data = await response.json();
+        return data as Message[];
       } catch (error) {
         console.error("Error fetching messages:", error);
         return [];
