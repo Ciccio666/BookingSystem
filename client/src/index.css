@@ -11,3 +11,26 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Calendar widescreen layout */
+.min-width-calendar {
+  min-width: 600px;
+}
+
+/* Calendar day highlight */
+.calendar-day.selected {
+  @apply bg-primary text-white;
+}
+
+.calendar-day.available {
+  @apply bg-pink-100 hover:bg-pink-200 cursor-pointer;
+}
+
+.calendar-day.today {
+  @apply font-bold;
+}
+
+/* Time slots pills */
+.time-slot-pill {
+  @apply rounded-lg px-4 py-2;
+}
