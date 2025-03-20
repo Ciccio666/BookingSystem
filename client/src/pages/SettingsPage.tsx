@@ -36,6 +36,7 @@ import { Service } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import WeeklySchedule from "@/components/availability/WeeklySchedule";
+import ServiceAddonList from "@/components/services/ServiceAddonList";
 import { 
   Clock, 
   Calendar, 
@@ -47,7 +48,8 @@ import {
   Trash2,
   GripVertical,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  PlusCircle
 } from "lucide-react";
 
 // Schema for service form

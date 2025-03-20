@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { ServiceAddon } from '@/lib/types';
-import { ServicePhotoUpload } from './ServicePhotoUpload';
+import ServicePhotoUpload from './ServicePhotoUpload';
 
 // Validation schema
 const serviceAddonFormSchema = z.object({

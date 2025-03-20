@@ -11,6 +11,19 @@ export interface Service {
   bufferAfter?: string; // Buffer time in minutes after appointment
 }
 
+export interface ServiceAddon {
+  id: number;
+  name: string;
+  description: string;
+  price: number; // in cents
+  active: boolean;
+  position: number;
+  photo?: string; // Base64 encoded image
+  duration: number; // additional duration in minutes
+  displayOnBookingPage: boolean;
+  addPriceToDeposit: boolean;
+}
+
 export interface Booking {
   id: number;
   serviceId: number;

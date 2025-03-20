@@ -17,20 +17,17 @@ const ServiceAddonList = () => {
   const { toast } = useToast();
 
   const {
-    data: addons = [],
+    data: addons = [] as ServiceAddon[],
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<ServiceAddon[]>({
     queryKey: ['/api/service-addons'],
     staleTime: 1000 * 60, // 1 minute
   });
 
   const createAddonMutation = useMutation({
     mutationFn: async (newAddon: Partial<ServiceAddon>) => {
-      return apiRequest('/api/service-addons', {
-        method: 'POST',
-        body: JSON.stringify(newAddon),
-      });
+      return apiRequest('POST', '/api/service-addons', newAddon);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/service-addons'] });
@@ -51,10 +48,7 @@ const ServiceAddonList = () => {
 
   const updateAddonMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<ServiceAddon> }) => {
-      return apiRequest(`/api/service-addons/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('PATCH', `/api/service-addons/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/service-addons'] });
@@ -75,10 +69,7 @@ const ServiceAddonList = () => {
 
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      return apiRequest(`/api/service-addons/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ active }),
-      });
+      return apiRequest('PATCH', `/api/service-addons/${id}`, { active });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/service-addons'] });
@@ -133,13 +124,13 @@ const ServiceAddonList = () => {
         </Button>
       </div>
 
-      {addons.length === 0 ? (
+      {addons && addons.length === 0 ? (
         <div className="text-center py-8 border rounded-lg bg-muted/20">
           <p className="text-muted-foreground">No service add-ons found. Add one to get started.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {addons.map((addon: ServiceAddon) => (
+          {addons && addons.map((addon) => (
             <ServiceAddonCard
               key={addon.id}
               addon={addon}
