@@ -1,0 +1,117 @@
+I'll provide you the foundational requirements for the front-end implementation. The application will consist of several modern, responsive pages designed with a sleek, mobile-first approach. The core modules include:
+
+1. **SMS Application**: 
+   - Mobile-first, responsive layout.
+   - Desktop: Conversation column on the left, chat view on the right.
+   - Mobile: Single conversation view.
+   - Features: Emoji support, file uploads, and other standard messaging functionalities.
+   - Conversation column: Search functionality at the top, plus (+) button to initiate new conversations.
+
+2. **AI Chat Page**:
+   - Standard chat interface integrating with OpenAI.
+   - No credentials required on the front-end; backend integration already handled.
+
+3. **12-Persona AI Chat Page**:
+   - Specialized interface for intensive AI training boot camp.
+   - Supports multiple AI personas (up to 12), detailed interactions, and persona-specific functionalities.
+
+4. **AI Settings Page**:
+   - Comprehensive page to configure extensive AI-related settings.
+   - Includes toggles for AI mode, training mode, and training control operations (ON, OFF, PAUSE, RESET, START_OVER).
+
+5. **Bookings Module**:
+   - Page to manage client bookings, services offered, and availability.
+   - Supports defining weekly time slots, booking windows, service pricing, duration, deposits, and buffer times.
+   - Integration-friendly, capable of incorporating existing full-featured booking systems if available to expedite development.
+
+Each page will serve as an initial implementation, ready for future refinements. All backend integrations, including credentials, are already in place and managed separately.
+
+  UI Implementations Needed:
+Receive SMS
+
+Input: Recipient Phone Number (text field)
+Input: SMS Message (text area)
+Action: Send SMS Button
+Receive WhatsApp
+
+Input: Recipient WhatsApp Number (text field)
+Input: WhatsApp Message (text area)
+Action: Send WhatsApp Message Button
+Create Booking
+
+Input: Service ID (text/select field)
+Input: Client Name (text field)
+Input: Client Phone Number (text field)
+Input: Booking Date (date picker)
+Input: Booking Time (time picker)
+Input: Extras (text area or select field)
+Input: Total Price (numeric input)
+Action: Create Booking Button
+Configure Reminders
+
+Input: First Reminder Timing (number input)
+Input: Second Reminder Timing (number input)
+Action: Configure Reminders Button
+Toggle AI Mode
+
+Input: Toggle Button (On/Off Switch)
+Toggle Training Mode
+
+Input: Toggle Button (On/Off Switch)
+Send Direct Message
+
+Input: Phone Number (text field)
+Input: Message (text area)
+Input: Channel Selector (SMS/WhatsApp Dropdown)
+Action: Send Direct Message Button
+Message Status
+
+Action: Fetch Message Status Button
+Display: Status Display Area (text or list)
+Persona Status
+
+Action: Fetch Persona Status Button
+Display: Persona Performance Metrics Display Area
+Start Training
+
+Input: Training Dataset (text field or select dropdown)
+Input: Max Turns (numeric input)
+Input: Message Delay Min (numeric input)
+Input: Message Delay Max (numeric input)
+Input: Personas (multi-select or list input)
+Action: Start Training Button
+Training Control
+
+Input: Operation Selector (Dropdown or radio buttons: ON, OFF, PAUSE, RESET, START_OVER)
+Action: Execute Training Control Button
+Training Status
+
+Action: Fetch Training Status Button
+Display: Training System Detailed Status Display Area
+AI System Control
+
+Input: Action Selector (text or dropdown)
+Input: Settings Configuration (JSON editor or dynamic form inputs)
+Action: Execute AI System Control Button
+Chat Interaction
+
+Input: Client Message (text area)
+Input: Response Body (text area)
+Action: Submit Chat Interaction Button
+Manage Services
+
+Input: Service Name (text field)
+Input: Description (text area)
+Input: Price (numeric input)
+Input: Duration (numeric input)
+Input: Deposit Required (checkbox toggle)
+Input: Deposit Amount (text or numeric input)
+Input: Buffer Before (text or numeric input)
+Input: Buffer After (text or numeric input)
+Action: Manage/Create Service Button
+Set Availability
+
+Input: Days (multi-select dropdown or checkboxes)
+Input: Time Slots (dynamic table or multiple inputs)
+Input: Max Advance Booking (numeric input)
+Action: Set Availability Button
