@@ -37,7 +37,7 @@ const TimeSelector = ({ timeSlots, selectedTime, onTimeSelect }: TimeSelectorPro
                 "rounded-lg",
                 !slot.available && "bg-neutral-100 text-neutral-400 cursor-not-allowed",
                 slot.available && slot.time === selectedTime && "bg-primary text-white border-primary hover:bg-primary/90",
-                slot.available && slot.time !== selectedTime && "bg-primary/5 text-primary-foreground hover:bg-primary/10 border-primary/20"
+                slot.available && slot.time !== selectedTime && "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
               )}
               disabled={!slot.available}
               onClick={() => slot.available && onTimeSelect(slot.time)}
