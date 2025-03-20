@@ -64,6 +64,8 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
+    backlog: 100,
+    keepAliveTimeout: 60000
   }, () => {
     log(`serving on port ${port}`);
   });
