@@ -29,6 +29,15 @@ const ServiceCard = ({ service, onSelect }: ServiceCardProps) => {
 
   return (
     <Card className="bg-white rounded-lg shadow overflow-hidden border border-neutral-200 flex flex-col h-full">
+      {service.photo && (
+        <div className="w-full h-48 overflow-hidden">
+          <img 
+            src={service.photo} 
+            alt={service.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
       <CardContent className="p-6 flex flex-col h-full">
         <div className="flex-grow">
           <h3 className="font-bold text-lg text-neutral-800 mb-2">{service.name}</h3>

@@ -113,42 +113,60 @@ export class MemStorage implements IStorage {
         description: "My Ideepthroat Natural Blow Job & CIM offers a discreet and professional experience for clients seeking excellence in oral pleasure.",
         duration: 15,
         price: 20000, // $200.00
-        active: true
+        active: true,
+        photo: null,
+        bufferBefore: "0",
+        bufferAfter: "15"
       },
       {
         name: "20min Suck and Fuck",
         description: "Introducing \"20min Suck and Fuck\" service designed for those seeking a quick yet fulfilling experience.",
         duration: 20,
         price: 25000, // $250.00
-        active: true
+        active: true,
+        photo: null,
+        bufferBefore: "15",
+        bufferAfter: "0"
       },
       {
         name: "30min Pornstar Girlfriend Experience",
         description: "My 30 minute Pornstar Girlfriend Experience service offers a thrilling and immersive experience that will leave you feeling satisfied and fulfilled.",
         duration: 30,
         price: 35000, // $350.00
-        active: true
+        active: true,
+        photo: null,
+        bufferBefore: "0",
+        bufferAfter: "15"
       },
       {
         name: "1hr Pornstar Girlfriend Experience",
         description: "Indulge in the ultimate fantasy with our 1hr Pornstar Girlfriend Experience service. I will provide you with an unforgettable experience tailored to your desires.",
         duration: 60,
         price: 60000, // $600.00
-        active: true
+        active: true,
+        photo: null,
+        bufferBefore: "15",
+        bufferAfter: "15"
       },
       {
         name: "2hrs Pornstar Girlfriend Experience",
         description: "Indulge in the ultimate fantasy with our 2-hour Pornstar Girlfriend Experience service. I'll shower you with attention, passion, and desire.",
         duration: 120,
         price: 120000, // $1200.00
-        active: true
+        active: true,
+        photo: null,
+        bufferBefore: "15",
+        bufferAfter: "30"
       },
       {
         name: "My Anonymous Sister",
         description: "A specialized experience with a unique theme and personal touch.",
         duration: 45,
         price: 25000, // $250.00
-        active: true
+        active: true,
+        photo: null,
+        bufferBefore: "0",
+        bufferAfter: "0"
       }
     ];
 
