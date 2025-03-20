@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   insertServiceSchema, 
+  insertServiceAddonSchema,
   insertBookingSchema, 
   insertMessageSchema, 
   insertAIPersonaSchema, 
@@ -236,6 +237,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete service' });
+    }
+  });
+  
+  // Service Add-ons endpoints
+  app.get('/api/service-addons', async (req: Request, res: Response) => {
+    try {
+      // Check if we want only active add-ons
+      const activeOnly = req.query.active === 'true';
+      
+      let addons;
+      if (activeOnly) {
+        addons = await storage.getActiveServiceAddons();
+      } else {
+        addons = await storage.getServiceAddons();
+      }
+      
+      res.json(addons);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch service add-ons' });
+    }
+  });
+
+  app.get('/api/service-addons/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid add-on ID' });
+      }
+      
+      const addon = await storage.getServiceAddon(id);
+      if (!addon) {
+        return res.status(404).json({ error: 'Service add-on not found' });
+      }
+      
+      res.json(addon);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch service add-on' });
+    }
+  });
+
+  app.post('/api/service-addons', async (req: Request, res: Response) => {
+    try {
+      const { data, error } = validateRequest(insertServiceAddonSchema, req.body);
+      if (error) {
+        return res.status(400).json({ error });
+      }
+      
+      const addon = await storage.createServiceAddon(data);
+      res.status(201).json(addon);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create service add-on' });
+    }
+  });
+
+  app.patch('/api/service-addons/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid add-on ID' });
+      }
+      
+      const addon = await storage.getServiceAddon(id);
+      if (!addon) {
+        return res.status(404).json({ error: 'Service add-on not found' });
+      }
+      
+      const { data, error } = validateRequest(insertServiceAddonSchema.partial(), req.body);
+      if (error) {
+        return res.status(400).json({ error });
+      }
+      
+      const updatedAddon = await storage.updateServiceAddon(id, data);
+      res.json(updatedAddon);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update service add-on' });
+    }
+  });
+  
+  app.patch('/api/service-addons/:id/position', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid add-on ID' });
+      }
+      
+      const addon = await storage.getServiceAddon(id);
+      if (!addon) {
+        return res.status(404).json({ error: 'Service add-on not found' });
+      }
+      
+      const { position } = req.body;
+      if (typeof position !== 'number') {
+        return res.status(400).json({ error: 'Position must be a number' });
+      }
+      
+      const updatedAddon = await storage.updateServiceAddonPosition(id, position);
+      res.json(updatedAddon);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update service add-on position' });
+    }
+  });
+  
+  app.post('/api/service-addons/order', async (req: Request, res: Response) => {
+    try {
+      const { addonIds } = req.body;
+      if (!Array.isArray(addonIds)) {
+        return res.status(400).json({ error: 'addonIds must be an array' });
+      }
+      
+      const updatedAddons = await storage.updateServiceAddonsOrder(addonIds);
+      res.json(updatedAddons);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update service add-ons order' });
+    }
+  });
+  
+  app.delete('/api/service-addons/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid add-on ID' });
+      }
+      
+      const addon = await storage.getServiceAddon(id);
+      if (!addon) {
+        return res.status(404).json({ error: 'Service add-on not found' });
+      }
+      
+      const success = await storage.deleteServiceAddon(id);
+      if (success) {
+        res.status(204).end();
+      } else {
+        res.status(500).json({ error: 'Failed to delete service add-on' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete service add-on' });
     }
   });
 

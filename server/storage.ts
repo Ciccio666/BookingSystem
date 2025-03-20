@@ -98,6 +98,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.services = new Map();
+    this.serviceAddons = new Map();
     this.availabilities = new Map();
     this.bookings = new Map();
     this.messages = new Map();
@@ -107,6 +108,7 @@ export class MemStorage implements IStorage {
     
     this.currentUserId = 1;
     this.currentServiceId = 1;
+    this.currentServiceAddonId = 1;
     this.currentAvailabilityId = 1;
     this.currentBookingId = 1;
     this.currentMessageId = 1;
@@ -184,6 +186,45 @@ export class MemStorage implements IStorage {
     ];
 
     sampleServices.forEach(service => this.createService(service));
+
+    // Create sample service add-ons
+    const sampleAddons: InsertServiceAddon[] = [
+      {
+        name: "Natural Sex",
+        description: "Only if I'm comfortable you are 20000%",
+        price: 10000, // $100.00
+        active: true,
+        position: 0,
+        photo: null,
+        duration: 0,
+        displayOnBookingPage: true,
+        addPriceToDeposit: false
+      },
+      {
+        name: "Anal Sex",
+        description: "Let's explore new depths of pleasure together",
+        price: 15000, // $150.00
+        active: true,
+        position: 1,
+        photo: null,
+        duration: 0,
+        displayOnBookingPage: true,
+        addPriceToDeposit: true
+      },
+      {
+        name: "Fetish Play",
+        description: "Explore your fantasies with a professional",
+        price: 8000, // $80.00
+        active: true,
+        position: 2,
+        photo: null,
+        duration: 0,
+        displayOnBookingPage: true,
+        addPriceToDeposit: false
+      }
+    ];
+
+    sampleAddons.forEach(addon => this.createServiceAddon(addon));
 
     // Create sample AI personas
     const samplePersonas: InsertAIPersona[] = [
@@ -337,6 +378,77 @@ export class MemStorage implements IStorage {
   
   async deleteService(id: number): Promise<boolean> {
     return this.services.delete(id);
+  }
+  
+  // Service Add-ons methods
+  async getServiceAddons(): Promise<ServiceAddon[]> {
+    // Return service add-ons sorted by position
+    return Array.from(this.serviceAddons.values()).sort((a, b) => (a.position || 0) - (b.position || 0));
+  }
+  
+  async getActiveServiceAddons(): Promise<ServiceAddon[]> {
+    // Return only active service add-ons sorted by position
+    return Array.from(this.serviceAddons.values())
+      .filter(addon => addon.active)
+      .sort((a, b) => (a.position || 0) - (b.position || 0));
+  }
+
+  async getServiceAddon(id: number): Promise<ServiceAddon | undefined> {
+    return this.serviceAddons.get(id);
+  }
+
+  async createServiceAddon(insertAddon: InsertServiceAddon): Promise<ServiceAddon> {
+    const id = this.currentServiceAddonId++;
+    // Get the highest position value and add 1
+    const highestPosition = Math.max(
+      0,
+      ...Array.from(this.serviceAddons.values()).map(a => a.position || 0)
+    );
+    const position = insertAddon.position !== undefined ? insertAddon.position : highestPosition + 1;
+    
+    const addon: ServiceAddon = { ...insertAddon, id, position };
+    this.serviceAddons.set(id, addon);
+    return addon;
+  }
+
+  async updateServiceAddon(id: number, addonUpdate: Partial<InsertServiceAddon>): Promise<ServiceAddon | undefined> {
+    const addon = this.serviceAddons.get(id);
+    if (!addon) return undefined;
+    
+    const updatedAddon = { ...addon, ...addonUpdate };
+    this.serviceAddons.set(id, updatedAddon);
+    return updatedAddon;
+  }
+  
+  async updateServiceAddonPosition(id: number, position: number): Promise<ServiceAddon | undefined> {
+    const addon = this.serviceAddons.get(id);
+    if (!addon) return undefined;
+    
+    const updatedAddon = { ...addon, position };
+    this.serviceAddons.set(id, updatedAddon);
+    return updatedAddon;
+  }
+  
+  async updateServiceAddonsOrder(addonIds: number[]): Promise<ServiceAddon[]> {
+    // Update position for each service add-on based on its index in the array
+    const updatedAddons = [];
+    
+    for (let i = 0; i < addonIds.length; i++) {
+      const id = addonIds[i];
+      const addon = this.serviceAddons.get(id);
+      
+      if (addon) {
+        const updatedAddon = { ...addon, position: i };
+        this.serviceAddons.set(id, updatedAddon);
+        updatedAddons.push(updatedAddon);
+      }
+    }
+    
+    return updatedAddons;
+  }
+  
+  async deleteServiceAddon(id: number): Promise<boolean> {
+    return this.serviceAddons.delete(id);
   }
 
   // Availability methods
