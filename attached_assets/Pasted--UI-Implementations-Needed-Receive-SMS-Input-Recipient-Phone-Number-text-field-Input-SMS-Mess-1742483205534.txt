@@ -1,0 +1,90 @@
+ UI Implementations Needed:
+Receive SMS
+
+
+Input: Recipient Phone Number (text field)
+Input: SMS Message (text area)
+Action: Send SMS Button
+Receive WhatsApp
+
+Input: Recipient WhatsApp Number (text field)
+Input: WhatsApp Message (text area)
+Action: Send WhatsApp Message Button
+Create Booking
+
+Input: Service ID (text/select field)
+Input: Client Name (text field)
+Input: Client Phone Number (text field)
+Input: Booking Date (date picker)
+Input: Booking Time (time picker)
+Input: Extras (text area or select field)
+Input: Total Price (numeric input)
+Action: Create Booking Button
+Configure Reminders
+
+Input: First Reminder Timing (number input)
+Input: Second Reminder Timing (number input)
+Action: Configure Reminders Button
+Toggle AI Mode
+
+Input: Toggle Button (On/Off Switch)
+Toggle Training Mode
+
+Input: Toggle Button (On/Off Switch)
+Send Direct Message
+
+Input: Phone Number (text field)
+Input: Message (text area)
+Input: Channel Selector (SMS/WhatsApp Dropdown)
+Action: Send Direct Message Button
+Message Status
+
+Action: Fetch Message Status Button
+Display: Status Display Area (text or list)
+Persona Status
+
+Action: Fetch Persona Status Button
+Display: Persona Performance Metrics Display Area
+Start Training
+
+Input: Training Dataset (text field or select dropdown)
+Input: Max Turns (numeric input)
+Input: Message Delay Min (numeric input)
+Input: Message Delay Max (numeric input)
+Input: Personas (multi-select or list input)
+Action: Start Training Button
+Training Control
+
+Input: Operation Selector (Dropdown or radio buttons: ON, OFF, PAUSE, RESET, START_OVER)
+Action: Execute Training Control Button
+Training Status
+
+Action: Fetch Training Status Button
+Display: Training System Detailed Status Display Area
+AI System Control
+
+Input: Action Selector (text or dropdown)
+Input: Settings Configuration (JSON editor or dynamic form inputs)
+Action: Execute AI System Control Button
+Chat Interaction
+
+Input: Client Message (text area)
+Input: Response Body (text area)
+Action: Submit Chat Interaction Button
+Manage Services
+
+Input: Service Name (text field)
+Input: Description (text area)
+Input: Price (numeric input)
+Input: Duration (numeric input)
+Input: Deposit Required (checkbox toggle)
+Input: Deposit Amount (text or numeric input)
+Input: Buffer Before (text or numeric input)
+Input: Buffer After (text or numeric input)
+Action: Manage/Create Service Button
+Set Availability
+
+Input: Days (multi-select dropdown or checkboxes)
+Input: Time Slots (dynamic table or multiple inputs)
+Input: Max Advance Booking (numeric input)
+Action: Set Availability Button
