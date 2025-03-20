@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Tabs, 
@@ -89,6 +89,13 @@ const SettingsPage = () => {
   const { data: services, isLoading: servicesLoading } = useQuery({
     queryKey: ['/api/services'],
   });
+  
+  // Update serviceList when services data changes
+  useEffect(() => {
+    if (services && Array.isArray(services)) {
+      setServiceList([...services]);
+    }
+  }, [services]);
 
   // Service form
   const serviceForm = useForm<z.infer<typeof serviceFormSchema>>({
@@ -187,6 +194,107 @@ const SettingsPage = () => {
       description: "Your messaging settings have been updated.",
     });
   };
+  
+  // Function to handle drag start
+  const handleDragStart = (index: number) => {
+    setDraggingIndex(index);
+  };
+  
+  // Function to handle drag over
+  const handleDragOver = (index: number) => {
+    if (draggingIndex === null || draggingIndex === index) return;
+    
+    const newList = [...serviceList];
+    const draggedItem = newList[draggingIndex];
+    
+    // Remove the dragged item
+    newList.splice(draggingIndex, 1);
+    // Insert it at the new position
+    newList.splice(index, 0, draggedItem);
+    
+    setServiceList(newList);
+    setDraggingIndex(index);
+  };
+  
+  // Function to handle drag end
+  const handleDragEnd = () => {
+    setDraggingIndex(null);
+    toast({
+      title: "Service order updated",
+      description: "The service order has been updated successfully.",
+    });
+    // Here you would typically make an API call to save the new order
+  };
+  
+  // Function to move service up in the list
+  const moveServiceUp = (index: number) => {
+    if (index === 0) return; // Already at the top
+    
+    const newList = [...serviceList];
+    const temp = newList[index];
+    newList[index] = newList[index - 1];
+    newList[index - 1] = temp;
+    
+    setServiceList(newList);
+    toast({
+      title: "Service moved up",
+      description: `${newList[index - 1].name} has been moved up in the list.`,
+    });
+  };
+  
+  // Function to move service down in the list
+  const moveServiceDown = (index: number) => {
+    if (index === serviceList.length - 1) return; // Already at the bottom
+    
+    const newList = [...serviceList];
+    const temp = newList[index];
+    newList[index] = newList[index + 1];
+    newList[index + 1] = temp;
+    
+    setServiceList(newList);
+    toast({
+      title: "Service moved down",
+      description: `${newList[index + 1].name} has been moved down in the list.`,
+    });
+  };
+  
+  // Function to toggle service active state
+  const toggleServiceActive = (id: number, isActive: boolean) => {
+    const updatedList = serviceList.map(service => 
+      service.id === id ? { ...service, active: isActive } : service
+    );
+    
+    setServiceList(updatedList);
+    
+    // Here we would make an API call to update the service in the backend
+    // For now, just show a toast
+    const service = serviceList.find(s => s.id === id);
+    if (service) {
+      toast({
+        title: `Service ${isActive ? 'activated' : 'deactivated'}`,
+        description: `${service.name} is now ${isActive ? 'active' : 'inactive'}.`
+      });
+    }
+  };
+  
+  // Function to delete a service
+  const deleteService = (id: number) => {
+    const service = serviceList.find(s => s.id === id);
+    if (!service) return;
+    
+    // Show confirmation before deleting
+    if (window.confirm(`Are you sure you want to delete ${service.name}?`)) {
+      const updatedList = serviceList.filter(service => service.id !== id);
+      setServiceList(updatedList);
+      
+      // Here we would make an API call to delete the service in the backend
+      toast({
+        title: "Service deleted",
+        description: `${service.name} has been successfully deleted.`,
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div>
@@ -240,23 +348,71 @@ const SettingsPage = () => {
                       </div>
                     ))}
                   </div>
-                ) : services && services.length > 0 ? (
+                ) : serviceList && serviceList.length > 0 ? (
                   <div className="space-y-4">
-                    {services.map((service: Service) => (
-                      <div key={service.id} className="p-4 border rounded-md">
+                    {serviceList.map((service: Service, index: number) => (
+                      <motion.div 
+                        key={service.id} 
+                        className={`p-4 border rounded-md ${draggingIndex === index ? 'border-primary border-2' : ''}`}
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          handleDragOver(index);
+                        }}
+                        onDragEnd={handleDragEnd}
+                        animate={{ 
+                          y: draggingIndex === index ? 2 : 0,
+                          boxShadow: draggingIndex === index ? '0 4px 8px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)'
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
                         <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{service.name}</h3>
-                            <p className="text-sm text-neutral-600 mt-1">{service.description}</p>
+                          <div className="flex items-start">
+                            <div className="flex flex-col mr-2 mt-1">
+                              <div 
+                                className="cursor-move text-gray-400 hover:text-gray-600"
+                                onMouseDown={(e) => e.preventDefault()}
+                              >
+                                <GripVertical className="h-5 w-5" />
+                              </div>
+                              <div className="flex flex-col mt-2 space-y-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-5 w-5 p-0 ${index === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-gray-800'}`}
+                                  onClick={() => moveServiceUp(index)}
+                                  disabled={index === 0}
+                                >
+                                  <ChevronUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-5 w-5 p-0 ${index === serviceList.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-gray-800'}`}
+                                  onClick={() => moveServiceDown(index)}
+                                  disabled={index === serviceList.length - 1}
+                                >
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="font-medium">{service.name}</h3>
+                              <p className="text-sm text-neutral-600 mt-1">{service.description}</p>
+                            </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Switch checked={service.active} onCheckedChange={(checked) => {
-                              toast({
-                                title: `Service ${checked ? 'activated' : 'deactivated'}`,
-                                description: `${service.name} is now ${checked ? 'active' : 'inactive'}.`
-                              });
-                            }} />
-                            <Button variant="ghost" size="sm" className="text-red-500 h-8 w-8 p-0">
+                            <Switch 
+                              checked={service.active} 
+                              onCheckedChange={(checked) => toggleServiceActive(service.id, checked)} 
+                            />
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-500 h-8 w-8 p-0"
+                              onClick={() => deleteService(service.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -270,7 +426,7 @@ const SettingsPage = () => {
                             AU${(service.price / 100).toFixed(2)}
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
