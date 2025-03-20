@@ -229,8 +229,19 @@ const ClientInfoForm = ({
             <h4 className="text-base font-medium text-primary mb-1">Items:</h4>
             <div className="flex justify-between text-sm mb-2">
               <span>{service.name}</span>
-              <span className="font-medium text-primary">{formattedPrice.formatted}</span>
+              <span className="font-medium text-primary">{formattedServicePrice.formatted}</span>
             </div>
+            
+            {selectedAddons && selectedAddons.length > 0 && (
+              <>
+                {selectedAddons.map((addon) => (
+                  <div key={addon.id} className="flex justify-between text-sm mb-2">
+                    <span>{addon.name}</span>
+                    <span className="font-medium text-primary">{formatPrice(addon.price).formatted}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
           {/* Total */}
@@ -238,7 +249,7 @@ const ClientInfoForm = ({
             <div className="flex justify-between items-center">
               <span className="font-medium">Total for booking:</span>
               <span className="font-bold text-xl text-primary">
-                {formattedPrice.formatted}
+                {formattedTotalPrice.formatted}
               </span>
             </div>
           </div>

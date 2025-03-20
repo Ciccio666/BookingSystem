@@ -8,7 +8,8 @@ import {
   insertMessageSchema, 
   insertAIPersonaSchema, 
   insertAISettingSchema, 
-  insertAIConversationSchema
+  insertAIConversationSchema,
+  insertAvailabilitySchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
