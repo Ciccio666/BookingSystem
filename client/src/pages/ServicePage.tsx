@@ -189,18 +189,24 @@ const ServicePage = () => {
             <h2 className="text-xl font-medium">Choose a Date & Time</h2>
           </div>
           
-          {/* Calendar Component */}
-          <Calendar
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-          />
-          
-          {/* Time Slots Component */}
-          <TimeSelector
-            timeSlots={timeSlots}
-            selectedTime={selectedTime}
-            onTimeSelect={handleTimeSelect}
-          />
+          {/* Calendar & Time Selection - responsive layout */}
+          <div className="flex flex-col md:flex-row">
+            <div className="md:max-w-[400px]">
+              <Calendar
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+                serviceDuration={selectedService.duration}
+              />
+            </div>
+            
+            <div className="md:flex-1">
+              <TimeSelector
+                timeSlots={timeSlots}
+                selectedTime={selectedTime}
+                onTimeSelect={handleTimeSelect}
+              />
+            </div>
+          </div>
           
           {/* Next Button */}
           <div className="p-4 border-t border-neutral-200 bg-neutral-50">
