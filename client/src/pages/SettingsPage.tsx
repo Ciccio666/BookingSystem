@@ -34,6 +34,7 @@ import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Service } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 import { 
   Clock, 
   Calendar, 
@@ -42,7 +43,10 @@ import {
   Bell, 
   DollarSign,
   Plus,
-  Trash2
+  Trash2,
+  GripVertical,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 
 // Schema for service form
@@ -76,6 +80,8 @@ const messagingFormSchema = z.object({
 });
 
 const SettingsPage = () => {
+  const [serviceList, setServiceList] = useState<Service[]>([]);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("services");
   const { toast } = useToast();
 

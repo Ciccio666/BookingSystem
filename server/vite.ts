@@ -23,11 +23,12 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  const protocol = process.env.REPL_SLUG ? 'wss' : 'ws';
   const serverOptions = {
     middlewareMode: true,
     hmr: {
       server,
-      protocol: 'ws',
+      protocol,
       host: '0.0.0.0',
       clientPort: 5000,
       path: '/hmr/'

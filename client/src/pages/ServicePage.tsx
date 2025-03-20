@@ -5,19 +5,12 @@ import ServiceCard from "@/components/services/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import Calendar from "@/components/booking/Calendar";
 import TimeSelector from "@/components/booking/TimeSelector";
 import ClientInfoForm from "@/components/booking/ClientInfoForm";
 import { generateTimeSlots } from "@/lib/utils/booking";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 
 // Booking flow steps
 enum BookingStep {
@@ -27,17 +20,6 @@ enum BookingStep {
   CONFIRMATION = 3
 }
 
-// Sorting options for services
-enum SortOption {
-  DEFAULT = "default",
-  PRICE_LOW = "price-low",
-  PRICE_HIGH = "price-high",
-  DURATION_LOW = "duration-low",
-  DURATION_HIGH = "duration-high",
-  NAME_ASC = "name-asc",
-  NAME_DESC = "name-desc"
-}
-
 const ServicePage = () => {
   // State for booking flow
   const [currentStep, setCurrentStep] = useState<BookingStep>(BookingStep.SERVICE_SELECTION);
@@ -45,7 +27,6 @@ const ServicePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [sortOption, setSortOption] = useState<SortOption>(SortOption.DEFAULT);
   const { toast } = useToast();
   
   // Fetch services from API
@@ -116,30 +97,6 @@ const ServicePage = () => {
       variant: "default",
     });
   };
-
-  // Sort services based on selected option
-  const getSortedServices = () => {
-    if (!services) return [];
-    
-    const servicesCopy = [...services];
-    
-    switch (sortOption) {
-      case SortOption.PRICE_LOW:
-        return servicesCopy.sort((a, b) => a.price - b.price);
-      case SortOption.PRICE_HIGH:
-        return servicesCopy.sort((a, b) => b.price - a.price);
-      case SortOption.DURATION_LOW:
-        return servicesCopy.sort((a, b) => a.duration - b.duration);
-      case SortOption.DURATION_HIGH:
-        return servicesCopy.sort((a, b) => b.duration - a.duration);
-      case SortOption.NAME_ASC:
-        return servicesCopy.sort((a, b) => a.name.localeCompare(b.name));
-      case SortOption.NAME_DESC:
-        return servicesCopy.sort((a, b) => b.name.localeCompare(a.name));
-      default:
-        return servicesCopy;
-    }
-  };
   
   // Loading state
   if (isLoading) {
@@ -179,34 +136,16 @@ const ServicePage = () => {
 
   // Service Selection Step
   if (currentStep === BookingStep.SERVICE_SELECTION) {
+    // Filter to only show active services
+    const activeServices = services ? services.filter((service: Service) => service.active) : [];
+    
     return (
       <div>
         <h1 className="text-2xl font-bold text-neutral-800 mb-6">Select a Service</h1>
         
-        {/* Sorting controls */}
-        <div className="flex justify-end mb-4">
-          <Select
-            value={sortOption}
-            onValueChange={(value) => setSortOption(value as SortOption)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort by..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SortOption.DEFAULT}>Default Order</SelectItem>
-              <SelectItem value={SortOption.PRICE_LOW}>Price: Low to High</SelectItem>
-              <SelectItem value={SortOption.PRICE_HIGH}>Price: High to Low</SelectItem>
-              <SelectItem value={SortOption.DURATION_LOW}>Duration: Shortest</SelectItem>
-              <SelectItem value={SortOption.DURATION_HIGH}>Duration: Longest</SelectItem>
-              <SelectItem value={SortOption.NAME_ASC}>Name: A to Z</SelectItem>
-              <SelectItem value={SortOption.NAME_DESC}>Name: Z to A</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {services && services.length > 0 ? (
+        {activeServices && activeServices.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {getSortedServices().map((service: Service) => (
+            {activeServices.map((service: Service) => (
               <ServiceCard
                 key={service.id}
                 service={service}
@@ -326,12 +265,12 @@ const ServicePage = () => {
   if (currentStep === BookingStep.CONFIRMATION) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Check className="w-8 h-8 text-green-600" />
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Check className="w-8 h-8 text-red-600" />
         </div>
         <h1 className="text-2xl font-bold text-neutral-800 mb-4">Booking Confirmed!</h1>
         <p className="text-neutral-600 mb-6">Your booking has been successfully confirmed. You will receive a confirmation message shortly.</p>
-        <Button onClick={() => setCurrentStep(BookingStep.SERVICE_SELECTION)}>
+        <Button onClick={() => setCurrentStep(BookingStep.SERVICE_SELECTION)} className="bg-primary hover:bg-primary/90">
           Make Another Booking
         </Button>
       </div>
