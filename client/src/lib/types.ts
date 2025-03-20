@@ -5,6 +5,10 @@ export interface Service {
   duration: number;
   price: number; // in cents
   active: boolean;
+  position: number;
+  photo?: string; // Base64 encoded image
+  bufferBefore?: string; // Buffer time in minutes before appointment
+  bufferAfter?: string; // Buffer time in minutes after appointment
 }
 
 export interface Booking {

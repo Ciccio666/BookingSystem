@@ -25,6 +25,9 @@ export const services = pgTable("services", {
   price: integer("price").notNull(), // price in cents
   active: boolean("active").default(true),
   position: integer("position").default(0), // for ordering services
+  photo: text("photo"), // Base64 encoded service image
+  bufferBefore: text("buffer_before").default("0"), // Buffer time in minutes before appointment
+  bufferAfter: text("buffer_after").default("0"), // Buffer time in minutes after appointment
 });
 
 export const insertServiceSchema = createInsertSchema(services).omit({
