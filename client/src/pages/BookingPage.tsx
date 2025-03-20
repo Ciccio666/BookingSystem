@@ -50,14 +50,14 @@ const BookingPage = () => {
   
   // Navigate back to services if no service ID is provided
   useEffect(() => {
-    if (!serviceId && !isLoading) {
+    if (!serviceId && !isLoading && !service) {
       navigate("/services");
       toast({
         title: "No Service Selected",
         description: "Please select a service first.",
       });
     }
-  }, [serviceId, isLoading, navigate, toast]);
+  }, [serviceId, isLoading, service, navigate, toast]);
   
   // Handle date selection
   const handleDateSelect = (date: Date) => {
