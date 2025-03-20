@@ -510,5 +510,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Message endpoint - for sending messages to AI personas
+  app.post('/api/ai/message', async (req: Request, res: Response) => {
+    try {
+      const { personaId, content } = req.body;
+      
+      if (!personaId || !content) {
+        return res.status(400).json({ error: 'PersonaId and content are required' });
+      }
+      
+      // Get the persona to verify it exists
+      const persona = await storage.getAIPersona(personaId);
+      if (!persona) {
+        return res.status(404).json({ error: 'AI Persona not found' });
+      }
+      
+      // In a real application, this would make a call to an AI service
+      // For our demo, we'll return a simple mock response
+      const timestamp = new Date().toISOString();
+      const responseId = `resp-${Date.now()}`;
+      const responseContent = `Thank you for your message: "${content}". This is a placeholder response from ${persona.name}. The actual AI integration would be handled by the backend service.`;
+      
+      // Create a simulated AI message response
+      const aiResponse = {
+        id: responseId,
+        conversationId: 1, // This would be a real conversation ID in a full implementation
+        role: "assistant",
+        content: responseContent,
+        timestamp: timestamp
+      };
+      
+      // Return the AI response
+      res.status(200).json(aiResponse);
+    } catch (error) {
+      console.error('Error handling AI message:', error);
+      res.status(500).json({ error: 'Failed to process AI message' });
+    }
+  });
+
+  // Endpoint to get AI messages for a conversation
+  app.get('/api/ai/messages', async (req: Request, res: Response) => {
+    try {
+      const personaId = req.query.personaId ? parseInt(req.query.personaId as string) : null;
+      
+      if (!personaId) {
+        return res.status(400).json({ error: 'PersonaId query parameter is required' });
+      }
+      
+      // In a real application, this would fetch messages from the database
+      // For our demo, we'll return sample messages if available or an empty array
+      
+      // Example response for the escort persona (personaId === 2)
+      if (personaId === 2) {
+        const now = Date.now();
+        const messages = [
+          {
+            id: "system-1",
+            conversationId: 1,
+            role: "system",
+            content: "You are a professional escort providing information about premium experiences. Be informative, professional, and discrete.",
+            timestamp: new Date(now - 1000 * 60 * 60).toISOString(),
+          },
+          {
+            id: "user-1",
+            conversationId: 1,
+            role: "user",
+            content: "Hello, I'm interested in booking the 1-hour Pornstar Girlfriend Experience. Can you tell me more about what it includes?",
+            timestamp: new Date(now - 1000 * 60 * 10).toISOString(),
+          },
+          {
+            id: "assistant-1",
+            conversationId: 1,
+            role: "assistant",
+            content: "Hello there! Thank you for your interest in our 1-hour Pornstar Girlfriend Experience. This premium service is designed to provide you with an unforgettable and tailored experience in a professional and discreet environment.\n\nThe experience includes personalized attention and companionship for the full hour. The service is priced at AU$600.00 and can be booked at your preferred available time slot.\n\nWould you like me to help you check availability or answer any other questions you might have?",
+            timestamp: new Date(now - 1000 * 60 * 9).toISOString(),
+          },
+          {
+            id: "user-2",
+            conversationId: 1,
+            role: "user",
+            content: "That sounds great. Is tomorrow afternoon available?",
+            timestamp: new Date(now - 1000 * 60 * 5).toISOString(),
+          },
+          {
+            id: "assistant-2",
+            conversationId: 1,
+            role: "assistant",
+            content: "Let me check the availability for tomorrow afternoon. Looking at the calendar, I see several open slots between 1:00 PM and 6:00 PM. Would you prefer early afternoon or later in the day?\n\nOnce we confirm a time, I'll need your name and contact number to secure the booking.",
+            timestamp: new Date(now - 1000 * 60 * 4).toISOString(),
+          },
+        ];
+        return res.json(messages);
+      }
+      
+      // Default empty conversation for other personas
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching AI messages:', error);
+      res.status(500).json({ error: 'Failed to fetch AI messages' });
+    }
+  });
+
   return httpServer;
 }

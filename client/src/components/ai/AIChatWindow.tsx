@@ -44,32 +44,16 @@ const AIChatWindow = ({
       // Create a temporary user message for immediate display
       const tempUserMessage: AIMessage = {
         id: `temp-${Date.now()}`,
-        conversationId: 0, // This will be replaced by the response from the API
+        conversationId: 0, 
         role: "user",
         content: newMessage,
         timestamp: new Date().toISOString(),
       };
       
-      // Call onMessageSend to update UI immediately
+      // Send the user message to the parent component for handling
       onMessageSend(tempUserMessage);
       
-      // Prepare message data for API
-      const messageData = {
-        personaId: persona.id,
-        content: newMessage,
-        // Add any other required fields for your AI API
-      };
-      
-      // Send message to API
-      // This is a placeholder - implement the actual API call
-      // In a real app, the backend would process this message with the AI and return a response
-      const response = await apiRequest("POST", "/api/ai/message", messageData);
-      const aiResponse = await response.json();
-      
-      // Call onMessageSend again with the AI response
-      onMessageSend(aiResponse);
-      
-      // Clear input
+      // Clear input after successful send
       setNewMessage("");
     } catch (error) {
       console.error("Failed to send message to AI:", error);

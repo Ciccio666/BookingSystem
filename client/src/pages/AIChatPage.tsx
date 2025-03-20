@@ -61,51 +61,15 @@ const AIChatPage = () => {
       if (!activePersonaId) return [];
 
       try {
-        // In a real app, this would be an API call to get messages for the active persona
-        // Mock data since the API endpoint isn't implemented as expected
-        if (activePersonaId === 2) { // Professional Escort
-          const now = Date.now();
-          return [
-            {
-              id: "system-1",
-              conversationId: 1,
-              role: "system",
-              content: "You are a professional escort providing information about premium experiences. Be informative, professional, and discrete.",
-              timestamp: new Date(now - 1000 * 60 * 60).toISOString(),
-            },
-            {
-              id: "user-1",
-              conversationId: 1,
-              role: "user",
-              content: "Hello, I'm interested in booking the 1-hour Pornstar Girlfriend Experience. Can you tell me more about what it includes?",
-              timestamp: new Date(now - 1000 * 60 * 10).toISOString(),
-            },
-            {
-              id: "assistant-1",
-              conversationId: 1,
-              role: "assistant",
-              content: "Hello there! Thank you for your interest in our 1-hour Pornstar Girlfriend Experience. This premium service is designed to provide you with an unforgettable and tailored experience in a professional and discreet environment.\n\nThe experience includes personalized attention and companionship for the full hour. The service is priced at AU$600.00 and can be booked at your preferred available time slot.\n\nWould you like me to help you check availability or answer any other questions you might have?",
-              timestamp: new Date(now - 1000 * 60 * 9).toISOString(),
-            },
-            {
-              id: "user-2",
-              conversationId: 1,
-              role: "user",
-              content: "That sounds great. Is tomorrow afternoon available?",
-              timestamp: new Date(now - 1000 * 60 * 5).toISOString(),
-            },
-            {
-              id: "assistant-2",
-              conversationId: 1,
-              role: "assistant",
-              content: "Let me check the availability for tomorrow afternoon. Looking at the calendar, I see several open slots between 1:00 PM and 6:00 PM. Would you prefer early afternoon or later in the day?\n\nOnce we confirm a time, I'll need your name and contact number to secure the booking.",
-              timestamp: new Date(now - 1000 * 60 * 4).toISOString(),
-            },
-          ] as AIMessage[];
+        // Call the API to get messages for this persona
+        const response = await fetch(`/api/ai/messages?personaId=${activePersonaId}`);
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(errorData || 'Failed to fetch messages');
         }
         
-        // Default empty conversation
-        return [] as AIMessage[];
+        return await response.json();
       } catch (error) {
         console.error("Error fetching AI messages:", error);
         toast({
@@ -170,10 +134,24 @@ const AIChatPage = () => {
   };
 
   // Handle sending a message
-  const handleSendMessage = (message: AIMessage) => {
-    // In a real app, this would send the message to the AI and get a response
-    // For now, we'll just add it to the messages array
-    queryClient.invalidateQueries({ queryKey: ['/api/ai/messages', activePersonaId] });
+  const handleSendMessage = async (message: AIMessage) => {
+    try {
+      // Send the message to the AI endpoint and get a response
+      await apiRequest("POST", "/api/ai/message", {
+        personaId: activePersonaId,
+        content: message.content
+      });
+      
+      // Refresh the messages to include the AI response
+      queryClient.invalidateQueries({ queryKey: ['/api/ai/messages', activePersonaId] });
+    } catch (error) {
+      console.error("Failed to send message to AI:", error);
+      toast({
+        title: "Message Not Sent",
+        description: "Failed to communicate with the AI. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Get the current active persona
